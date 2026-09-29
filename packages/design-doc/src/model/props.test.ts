@@ -38,4 +38,23 @@ describe("PropDef", () => {
   test("rejects a type outside the eight kinds", () => {
     expect(PropDef.safeParse({ type: "date" }).success).toBe(false);
   });
+
+  test("points at the type of a definition that does not fit", () => {
+    const inObject = PropDef.safeParse({
+      type: "object",
+      fields: { a: { type: "nope" } },
+    });
+    expect(inObject.success).toBe(false);
+    expect(inObject.error?.issues.map((issue) => issue.path)).toEqual([
+      ["fields", "a", "type"],
+    ]);
+    const inArray = PropDef.safeParse({
+      type: "array",
+      of: { type: "nope" },
+    });
+    expect(inArray.success).toBe(false);
+    expect(inArray.error?.issues.map((issue) => issue.path)).toEqual([
+      ["of", "type"],
+    ]);
+  });
 });
