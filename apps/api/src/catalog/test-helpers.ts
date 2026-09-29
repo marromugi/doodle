@@ -1,4 +1,4 @@
-/** Stores a release row. No catalog function writes a release yet. */
+/** Stores a release row for tests. */
 export async function putRelease(
   db: D1Database,
   id: string,

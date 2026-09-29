@@ -1,11 +1,6 @@
 import type { EditOperation, Scope, TreeDocument } from "@doodle/design-doc";
-import {
-  identityToSearch,
-  type ClientMessage,
-  type Identity,
-  type ServerMessage,
-} from "@doodle/protocol";
-import { env, exports } from "cloudflare:workers";
+import type { ClientMessage, Identity, ServerMessage } from "@doodle/protocol";
+import { env } from "cloudflare:workers";
 import { describe, expect, test } from "vitest";
 
 import { addFile, addPage, addRequest, registerDocument } from "../catalog";
@@ -14,38 +9,25 @@ import { putRelease as insertRelease } from "../catalog/test-helpers";
 import { takeRequest } from "../catalog/transitions";
 import { catalogFromEnv } from "./catalog-d1";
 import type { DocumentSession } from "./document-session";
+import {
+  agentA,
+  agentB,
+  Client,
+  failureCode,
+  human,
+  newId,
+} from "./test-client";
 
 const db = env.DB;
-
-const human: Identity = { kind: "human" };
-const agentA: Identity = { kind: "agent", agentId: "agt_A" };
-const agentB: Identity = { kind: "agent", agentId: "agt_B" };
-
-const newId = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
 
 const exchange = async (
   documentId: string,
   identity: Identity,
   message: ClientMessage,
 ): Promise<ServerMessage> => {
-  const response = await exports.default.fetch(
-    `http://localhost/api/documents/${documentId}/session?${identityToSearch(identity)}`,
-    { headers: { Upgrade: "websocket" } },
-  );
-  const socket = response.webSocket;
-  if (!socket) throw new Error(`no WebSocket, status ${response.status}`);
-  socket.accept();
-  const reply = new Promise<ServerMessage>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("no message")), 5_000);
-    socket.addEventListener("message", (event) => {
-      clearTimeout(timer);
-      resolve(JSON.parse(String(event.data)) as ServerMessage);
-    });
-  });
-  socket.send(JSON.stringify(message));
-  const result = await reply;
-  socket.close();
-  return result;
+  const client = await Client.connect(documentId, identity);
+  client.send(message);
+  return client.next();
 };
 
 const operate = (
@@ -53,9 +35,6 @@ const operate = (
   identity: Identity,
   operation: EditOperation,
 ) => exchange(documentId, identity, { type: "operation", operation });
-
-const failureCode = (message: ServerMessage): unknown =>
-  message.type === "failure" ? message.failure.code : message.type;
 
 const stubOf = (documentId: string) =>
   env.DOCUMENT_SESSION.get(
