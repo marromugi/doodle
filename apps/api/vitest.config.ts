@@ -10,7 +10,12 @@ export default defineConfig(async () => {
     plugins: [
       cloudflareTest({
         wrangler: { configPath: "./wrangler.jsonc" },
-        miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
+        // The session tests run the worker with the session wired to a fake catalog.
+        main: "./src/session/test-worker.ts",
+        miniflare: {
+          bindings: { TEST_MIGRATIONS: migrations },
+          durableObjects: { FAKE_CATALOG: "FakeCatalog" },
+        },
       }),
     ],
     test: {
