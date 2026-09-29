@@ -455,7 +455,7 @@ describe("validate", () => {
     const tone: Component["props"] = {
       tone: { type: "enum", values: ["a", "b"], required: true },
     };
-    const badge = (color: unknown): Record<string, Component> => ({
+    const withColor = (color: unknown): Record<string, Component> => ({
       cmp_badge: {
         name: "Badge",
         props: tone,
@@ -472,7 +472,7 @@ describe("validate", () => {
       invalid(
         validate(
           draft(
-            badge({
+            withColor({
               match: "tone",
               cases: { a: "#000000", b: "not-a-colour" },
             }),
@@ -491,7 +491,7 @@ describe("validate", () => {
       invalid(
         validate(
           draft(
-            badge({
+            withColor({
               match: "tone",
               cases: { a: "#000000", b: "#ffffff" },
               default: "also-not",

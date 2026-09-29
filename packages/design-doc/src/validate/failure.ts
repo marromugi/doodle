@@ -18,6 +18,13 @@ export const ValidateFailure = z.union([
     z.strictObject({ code: z.literal("repeat-name-shadowed"), ...at }),
     z.strictObject({ code: z.literal("var-outside-repeat"), ...at }),
     z.strictObject({ code: z.literal("component-cycle"), ...at }),
+    z.strictObject({
+      code: z.literal("invalid-color"),
+      nodeId: z.string(),
+      key: z.enum(["background", "border.color", "color"]),
+      value: z.string(),
+      message: z.string(),
+    }),
   ]),
 ]);
 export type ValidateFailure = z.infer<typeof ValidateFailure>;
