@@ -4,9 +4,11 @@ import type { PropDef } from "../model/props";
 import type { Scope } from "../model/scope";
 import { TokenKind } from "../model/tokens";
 import type { Value } from "../model/value";
+import { checkInstanceProps } from "../props/check";
+import { fitsPropType } from "../props/type";
 import type { Validate } from "../roles";
 import type { ValidateFailure } from "./failure";
-import { has, matchesType } from "./prop-types";
+import { has } from "./has";
 
 type Edge = { from: string; to: string; nodeId: string };
 
@@ -191,30 +193,15 @@ const walkInstance = (
     });
   }
   const defs = ctx.scope.components[node.component]!.props;
-  for (const [name, def] of Object.entries(defs)) {
-    if (def.required === true && !has(node.props, name)) {
-      report({
-        code: "missing-required-prop",
-        prop: name,
-        message: `required prop "${name}" is missing`,
-      });
-    }
-  }
-  for (const [name, value] of Object.entries(node.props)) {
-    if (!has(defs, name)) {
-      report({
-        code: "unknown-prop",
-        prop: name,
-        message: `"${name}" is not a prop of "${node.component}"`,
-      });
-    } else if (!matchesType(value, defs[name]!, ctx.props)) {
-      report({
-        code: "prop-type-mismatch",
-        prop: name,
-        message: `the value of "${name}" does not match its type`,
-      });
-    }
-  }
+  ctx.out.push(
+    ...checkInstanceProps({
+      nodeId: node.id,
+      component: node.component,
+      props: node.props,
+      defs,
+      enclosing: ctx.props,
+    }),
+  );
 };
 
 const walkNode = (node: Node, ctx: Ctx): void => {
@@ -303,7 +290,7 @@ const walkDefault = (
 ): void => {
   if (def.default !== undefined) {
     walkValue(def.default, null, ctx, nodeId);
-    if (!matchesType(def.default, def, ctx.props)) {
+    if (!fitsPropType(def.default, def, ctx.props)) {
       fail(
         ctx,
         nodeId,

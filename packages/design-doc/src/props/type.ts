@@ -39,7 +39,7 @@ const sameType = (from: Typed, to: Typed): boolean => {
  * enclosing component's props, used to read the type of a `{ prop }` value.
  * A `{ var }` cannot be typed here and is accepted.
  */
-export const matchesType = (
+export const fitsPropType = (
   value: Value,
   type: Typed,
   props: Record<string, PropDef> | null,
@@ -67,7 +67,7 @@ export const matchesType = (
   if ("match" in value) {
     const branches = Object.values(value.cases);
     if (value.default !== undefined) branches.push(value.default);
-    return branches.every((branch) => matchesType(branch, type, props));
+    return branches.every((branch) => fitsPropType(branch, type, props));
   }
   if ("token" in value) {
     return (
@@ -79,7 +79,7 @@ export const matchesType = (
   if ("array" in value) {
     return (
       type.type === "array" &&
-      value.array.every((item) => matchesType(item, type.of, props))
+      value.array.every((item) => fitsPropType(item, type.of, props))
     );
   }
   if ("object" in value) {
@@ -89,7 +89,7 @@ export const matchesType = (
     return (
       Object.keys(given).every(
         (key) =>
-          has(fields, key) && matchesType(given[key]!, fields[key]!, props),
+          has(fields, key) && fitsPropType(given[key]!, fields[key]!, props),
       ) &&
       Object.keys(fields).every(
         (key) => fields[key]!.required !== true || has(given, key),
