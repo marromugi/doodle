@@ -1067,6 +1067,31 @@ describe("apply on a draft document", () => {
     ]);
   });
 
+  test("a draft holding a colour token that is not a colour fails every operation except one that changes that token to a colour", () => {
+    const broken: DraftDocument = {
+      ...d0,
+      tokens: { ...d0.tokens, color: { primary: "url(x)" } },
+    };
+    expect(
+      failures(
+        onDraft(broken, {
+          type: "add-token",
+          base: 0,
+          token: "space.md",
+          value: 16,
+        }),
+      ),
+    ).toMatchObject([{ code: "invalid-shape" }]);
+    expect(
+      onDraft(broken, {
+        type: "change-token",
+        base: 0,
+        token: "color.primary",
+        value: "#000000",
+      }).ok,
+    ).toBe(true);
+  });
+
   test("a token name of the wrong form fails with invalid-token-name", () => {
     expect(
       failures(
