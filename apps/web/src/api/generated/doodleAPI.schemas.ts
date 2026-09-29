@@ -193,6 +193,44 @@ export interface Page {
   adoptedProposal: string | null;
 }
 
+export type AuthorKind = (typeof AuthorKind)[keyof typeof AuthorKind];
+
+export const AuthorKind = {
+  human: "human",
+  agent: "agent",
+} as const;
+
+export interface Comment {
+  id: string;
+  authorKind: AuthorKind;
+  body: string;
+  createdAt: string;
+}
+
+export interface Thread {
+  id: string;
+  document: string;
+  node: string;
+  awaitingReply: boolean;
+  comments: Comment[];
+}
+
+export interface AddThread {
+  document: string;
+  node: string;
+  authorKind: AuthorKind;
+  body: string;
+}
+
+export interface AddComment {
+  authorKind: AuthorKind;
+  body: string;
+}
+
+export interface ThreadList {
+  threads: Thread[];
+}
+
 export interface PageList {
   pages: Page[];
 }
@@ -227,3 +265,15 @@ export type CompleteRequestBody = {
 export type AdoptProposalBody = {
   proposal: string;
 };
+
+export type ListThreadsParams = {
+  document?: string;
+  awaitingReply?: ListThreadsAwaitingReply;
+};
+
+export type ListThreadsAwaitingReply =
+  (typeof ListThreadsAwaitingReply)[keyof typeof ListThreadsAwaitingReply];
+
+export const ListThreadsAwaitingReply = {
+  true: "true",
+} as const;
