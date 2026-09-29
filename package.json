@@ -1,0 +1,24 @@
+{
+  "name": "doodle",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "gen": "pnpm --filter @doodle/api openapi && pnpm --filter @doodle/web gen",
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "oxlint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "oxlint": "^1.86.0",
+    "prettier": "^3.9.9",
+    "typescript": "^7.0.2"
+  }
+}

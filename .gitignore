@@ -1,0 +1,12 @@
+node_modules/
+dist/
+storybook-static/
+.env
+.env.*
+*.log
+.DS_Store
+.claude
+.wrangler/
+.tanstack/
+.output/
+.dev.vars

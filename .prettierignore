@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+.claude/
+**/routeTree.gen.ts
+**/worker-configuration.d.ts
+apps/web/src/api/generated/
+apps/api/openapi.json
