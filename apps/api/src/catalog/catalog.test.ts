@@ -88,6 +88,7 @@ describe("recording files", () => {
           latestRelease: null,
           usedByApps: 0,
           referenced: false,
+          hasUnreleasedChanges: false,
         },
       ],
     });
