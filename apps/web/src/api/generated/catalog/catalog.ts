@@ -24,14 +24,24 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AbortedRequests,
+  AdoptProposalBody,
   CatalogError,
+  CompleteRequestBody,
   DocumentEntry,
   FileList,
   GetDocumentSummary200,
+  ListRequestsParams,
+  Page,
+  PageList,
   PutDocumentSummary200,
   PutDocumentSummaryBody,
+  Request,
+  RequestList,
+  TakeRequestBody,
   Thumbnail,
   ThumbnailPut,
+  TransitionError,
 } from "../doodleAPI.schemas";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -2030,6 +2040,2434 @@ export function useGetDocumentThumbnailSuspense<
     documentId,
     options,
   );
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type listRequestsResponse200 = {
+  data: RequestList;
+  status: 200;
+};
+
+export type listRequestsResponseSuccess = listRequestsResponse200 & {
+  headers: Headers;
+};
+export type listRequestsResponse = listRequestsResponseSuccess;
+
+export const getListRequestsUrl = (params?: ListRequestsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/requests?${stringifiedParams}`
+    : `/api/requests`;
+};
+
+export const listRequests = async (
+  params?: ListRequestsParams,
+  options?: RequestInit,
+): Promise<listRequestsResponse> => {
+  const res = await fetch(getListRequestsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listRequestsResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as listRequestsResponse;
+};
+
+export const getListRequestsQueryKey = (params?: ListRequestsParams) => {
+  return [`/api/requests`, ...(params ? [params] : [])] as const;
+};
+
+export const getListRequestsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listRequests>>,
+  TError = unknown,
+>(
+  params?: ListRequestsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listRequests>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListRequestsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listRequests>>> = ({
+    signal,
+  }) => listRequests(params, { signal, ...fetchOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listRequests>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListRequestsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listRequests>>
+>;
+export type ListRequestsQueryError = unknown;
+
+export function useListRequests<
+  TData = Awaited<ReturnType<typeof listRequests>>,
+  TError = unknown,
+>(
+  params: undefined | ListRequestsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listRequests>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequests>>,
+          TError,
+          Awaited<ReturnType<typeof listRequests>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListRequests<
+  TData = Awaited<ReturnType<typeof listRequests>>,
+  TError = unknown,
+>(
+  params?: ListRequestsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listRequests>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRequests>>,
+          TError,
+          Awaited<ReturnType<typeof listRequests>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListRequests<
+  TData = Awaited<ReturnType<typeof listRequests>>,
+  TError = unknown,
+>(
+  params?: ListRequestsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listRequests>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useListRequests<
+  TData = Awaited<ReturnType<typeof listRequests>>,
+  TError = unknown,
+>(
+  params?: ListRequestsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listRequests>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getListRequestsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListRequestsSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof listRequests>>,
+  TError = unknown,
+>(
+  params?: ListRequestsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listRequests>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListRequestsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listRequests>>> = ({
+    signal,
+  }) => listRequests(params, { signal, ...fetchOptions });
+
+  return queryOptionsBuilder({
+    queryKey,
+    ...queryOptions,
+    queryFn: queryOptions?.queryFn ?? queryFn,
+  }) as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof listRequests>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> } & {
+    throwOnError?: ((this: never, error: TError) => boolean) & {
+      readonly __inferenceOnly: never;
+    };
+  };
+};
+
+export type ListRequestsSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listRequests>>
+>;
+export type ListRequestsSuspenseQueryError = unknown;
+
+export function useListRequestsSuspense<
+  TData = Awaited<ReturnType<typeof listRequests>>,
+  TError = unknown,
+>(
+  params: undefined | ListRequestsParams,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listRequests>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListRequestsSuspense<
+  TData = Awaited<ReturnType<typeof listRequests>>,
+  TError = unknown,
+>(
+  params?: ListRequestsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listRequests>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListRequestsSuspense<
+  TData = Awaited<ReturnType<typeof listRequests>>,
+  TError = unknown,
+>(
+  params?: ListRequestsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listRequests>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useListRequestsSuspense<
+  TData = Awaited<ReturnType<typeof listRequests>>,
+  TError = unknown,
+>(
+  params?: ListRequestsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listRequests>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getListRequestsSuspenseQueryOptions(params, options);
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type getRequestResponse200 = {
+  data: Request;
+  status: 200;
+};
+
+export type getRequestResponse404 = {
+  data: CatalogError;
+  status: 404;
+};
+
+export type getRequestResponseSuccess = getRequestResponse200 & {
+  headers: Headers;
+};
+export type getRequestResponseError = getRequestResponse404 & {
+  headers: Headers;
+};
+
+export type getRequestResponse =
+  getRequestResponseSuccess | getRequestResponseError;
+
+export const getGetRequestUrl = (id: string) => {
+  return `/api/requests/${id}`;
+};
+
+export const getRequest = async (
+  id: string,
+  options?: RequestInit,
+): Promise<getRequestResponse> => {
+  const res = await fetch(getGetRequestUrl(id), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getRequestResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as getRequestResponse;
+};
+
+export const getGetRequestQueryKey = (id: string) => {
+  return [`/api/requests/${id}`] as const;
+};
+
+export const getGetRequestQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRequest>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRequest>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRequestQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRequest>>> = ({
+    signal,
+  }) => getRequest(id, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRequest>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRequestQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRequest>>
+>;
+export type GetRequestQueryError = CatalogError;
+
+export function useGetRequest<
+  TData = Awaited<ReturnType<typeof getRequest>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRequest>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRequest>>,
+          TError,
+          Awaited<ReturnType<typeof getRequest>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetRequest<
+  TData = Awaited<ReturnType<typeof getRequest>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRequest>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRequest>>,
+          TError,
+          Awaited<ReturnType<typeof getRequest>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetRequest<
+  TData = Awaited<ReturnType<typeof getRequest>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRequest>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetRequest<
+  TData = Awaited<ReturnType<typeof getRequest>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRequest>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetRequestQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetRequestSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRequest>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getRequest>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRequestQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRequest>>> = ({
+    signal,
+  }) => getRequest(id, { signal, ...fetchOptions });
+
+  return queryOptionsBuilder({
+    queryKey,
+    ...queryOptions,
+    queryFn: queryOptions?.queryFn ?? queryFn,
+  }) as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof getRequest>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> } & {
+    throwOnError?: ((this: never, error: TError) => boolean) & {
+      readonly __inferenceOnly: never;
+    };
+  };
+};
+
+export type GetRequestSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRequest>>
+>;
+export type GetRequestSuspenseQueryError = CatalogError;
+
+export function useGetRequestSuspense<
+  TData = Awaited<ReturnType<typeof getRequest>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getRequest>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetRequestSuspense<
+  TData = Awaited<ReturnType<typeof getRequest>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getRequest>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetRequestSuspense<
+  TData = Awaited<ReturnType<typeof getRequest>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getRequest>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetRequestSuspense<
+  TData = Awaited<ReturnType<typeof getRequest>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getRequest>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetRequestSuspenseQueryOptions(id, options);
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type takeRequestResponse200 = {
+  data: Request;
+  status: 200;
+};
+
+export type takeRequestResponse404 = {
+  data: TransitionError;
+  status: 404;
+};
+
+export type takeRequestResponse409 = {
+  data: TransitionError;
+  status: 409;
+};
+
+export type takeRequestResponseSuccess = takeRequestResponse200 & {
+  headers: Headers;
+};
+export type takeRequestResponseError = (
+  takeRequestResponse404 | takeRequestResponse409
+) & {
+  headers: Headers;
+};
+
+export type takeRequestResponse =
+  takeRequestResponseSuccess | takeRequestResponseError;
+
+export const getTakeRequestUrl = (id: string) => {
+  return `/api/requests/${id}/take`;
+};
+
+export const takeRequest = async (
+  id: string,
+  takeRequestBody?: TakeRequestBody,
+  options?: RequestInit,
+): Promise<takeRequestResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  const res = await fetch(getTakeRequestUrl(id), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(takeRequestBody),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: takeRequestResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as takeRequestResponse;
+};
+
+export const getTakeRequestQueryKey = (
+  id: string,
+  takeRequestBody?: TakeRequestBody,
+) => {
+  return ["POST", `/api/requests/${id}/take`, takeRequestBody] as const;
+};
+
+export const getTakeRequestQueryOptions = <
+  TData = Awaited<ReturnType<typeof takeRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  takeRequestBody?: TakeRequestBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof takeRequest>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getTakeRequestQueryKey(id, takeRequestBody);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof takeRequest>>> = ({
+    signal,
+  }) => takeRequest(id, takeRequestBody, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof takeRequest>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type TakeRequestQueryResult = NonNullable<
+  Awaited<ReturnType<typeof takeRequest>>
+>;
+export type TakeRequestQueryError = TransitionError;
+
+export function useTakeRequest<
+  TData = Awaited<ReturnType<typeof takeRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  takeRequestBody: undefined | TakeRequestBody,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof takeRequest>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof takeRequest>>,
+          TError,
+          Awaited<ReturnType<typeof takeRequest>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useTakeRequest<
+  TData = Awaited<ReturnType<typeof takeRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  takeRequestBody?: TakeRequestBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof takeRequest>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof takeRequest>>,
+          TError,
+          Awaited<ReturnType<typeof takeRequest>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useTakeRequest<
+  TData = Awaited<ReturnType<typeof takeRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  takeRequestBody?: TakeRequestBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof takeRequest>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useTakeRequest<
+  TData = Awaited<ReturnType<typeof takeRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  takeRequestBody?: TakeRequestBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof takeRequest>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getTakeRequestQueryOptions(id, takeRequestBody, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type markRequestDeliveredResponse200 = {
+  data: Request;
+  status: 200;
+};
+
+export type markRequestDeliveredResponse404 = {
+  data: TransitionError;
+  status: 404;
+};
+
+export type markRequestDeliveredResponse409 = {
+  data: TransitionError;
+  status: 409;
+};
+
+export type markRequestDeliveredResponseSuccess =
+  markRequestDeliveredResponse200 & {
+    headers: Headers;
+  };
+export type markRequestDeliveredResponseError = (
+  markRequestDeliveredResponse404 | markRequestDeliveredResponse409
+) & {
+  headers: Headers;
+};
+
+export type markRequestDeliveredResponse =
+  markRequestDeliveredResponseSuccess | markRequestDeliveredResponseError;
+
+export const getMarkRequestDeliveredUrl = (id: string) => {
+  return `/api/requests/${id}/delivered`;
+};
+
+export const markRequestDelivered = async (
+  id: string,
+  options?: RequestInit,
+): Promise<markRequestDeliveredResponse> => {
+  const res = await fetch(getMarkRequestDeliveredUrl(id), {
+    ...options,
+    method: "POST",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: markRequestDeliveredResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as markRequestDeliveredResponse;
+};
+
+export const getMarkRequestDeliveredQueryKey = (id: string) => {
+  return ["POST", `/api/requests/${id}/delivered`] as const;
+};
+
+export const getMarkRequestDeliveredQueryOptions = <
+  TData = Awaited<ReturnType<typeof markRequestDelivered>>,
+  TError = TransitionError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof markRequestDelivered>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getMarkRequestDeliveredQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof markRequestDelivered>>
+  > = ({ signal }) => markRequestDelivered(id, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof markRequestDelivered>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type MarkRequestDeliveredQueryResult = NonNullable<
+  Awaited<ReturnType<typeof markRequestDelivered>>
+>;
+export type MarkRequestDeliveredQueryError = TransitionError;
+
+export function useMarkRequestDelivered<
+  TData = Awaited<ReturnType<typeof markRequestDelivered>>,
+  TError = TransitionError,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof markRequestDelivered>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof markRequestDelivered>>,
+          TError,
+          Awaited<ReturnType<typeof markRequestDelivered>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useMarkRequestDelivered<
+  TData = Awaited<ReturnType<typeof markRequestDelivered>>,
+  TError = TransitionError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof markRequestDelivered>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof markRequestDelivered>>,
+          TError,
+          Awaited<ReturnType<typeof markRequestDelivered>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useMarkRequestDelivered<
+  TData = Awaited<ReturnType<typeof markRequestDelivered>>,
+  TError = TransitionError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof markRequestDelivered>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useMarkRequestDelivered<
+  TData = Awaited<ReturnType<typeof markRequestDelivered>>,
+  TError = TransitionError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof markRequestDelivered>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getMarkRequestDeliveredQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type completeRequestResponse200 = {
+  data: Request;
+  status: 200;
+};
+
+export type completeRequestResponse404 = {
+  data: TransitionError;
+  status: 404;
+};
+
+export type completeRequestResponse409 = {
+  data: TransitionError;
+  status: 409;
+};
+
+export type completeRequestResponseSuccess = completeRequestResponse200 & {
+  headers: Headers;
+};
+export type completeRequestResponseError = (
+  completeRequestResponse404 | completeRequestResponse409
+) & {
+  headers: Headers;
+};
+
+export type completeRequestResponse =
+  completeRequestResponseSuccess | completeRequestResponseError;
+
+export const getCompleteRequestUrl = (id: string) => {
+  return `/api/requests/${id}/complete`;
+};
+
+export const completeRequest = async (
+  id: string,
+  completeRequestBody?: CompleteRequestBody,
+  options?: RequestInit,
+): Promise<completeRequestResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  const res = await fetch(getCompleteRequestUrl(id), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(completeRequestBody),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: completeRequestResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as completeRequestResponse;
+};
+
+export const getCompleteRequestQueryKey = (
+  id: string,
+  completeRequestBody?: CompleteRequestBody,
+) => {
+  return ["POST", `/api/requests/${id}/complete`, completeRequestBody] as const;
+};
+
+export const getCompleteRequestQueryOptions = <
+  TData = Awaited<ReturnType<typeof completeRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  completeRequestBody?: CompleteRequestBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof completeRequest>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getCompleteRequestQueryKey(id, completeRequestBody);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof completeRequest>>> = ({
+    signal,
+  }) => completeRequest(id, completeRequestBody, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof completeRequest>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CompleteRequestQueryResult = NonNullable<
+  Awaited<ReturnType<typeof completeRequest>>
+>;
+export type CompleteRequestQueryError = TransitionError;
+
+export function useCompleteRequest<
+  TData = Awaited<ReturnType<typeof completeRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  completeRequestBody: undefined | CompleteRequestBody,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof completeRequest>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof completeRequest>>,
+          TError,
+          Awaited<ReturnType<typeof completeRequest>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCompleteRequest<
+  TData = Awaited<ReturnType<typeof completeRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  completeRequestBody?: CompleteRequestBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof completeRequest>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof completeRequest>>,
+          TError,
+          Awaited<ReturnType<typeof completeRequest>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCompleteRequest<
+  TData = Awaited<ReturnType<typeof completeRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  completeRequestBody?: CompleteRequestBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof completeRequest>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useCompleteRequest<
+  TData = Awaited<ReturnType<typeof completeRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  completeRequestBody?: CompleteRequestBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof completeRequest>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCompleteRequestQueryOptions(
+    id,
+    completeRequestBody,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type retryRequestResponse200 = {
+  data: Request;
+  status: 200;
+};
+
+export type retryRequestResponse404 = {
+  data: TransitionError;
+  status: 404;
+};
+
+export type retryRequestResponse409 = {
+  data: TransitionError;
+  status: 409;
+};
+
+export type retryRequestResponseSuccess = retryRequestResponse200 & {
+  headers: Headers;
+};
+export type retryRequestResponseError = (
+  retryRequestResponse404 | retryRequestResponse409
+) & {
+  headers: Headers;
+};
+
+export type retryRequestResponse =
+  retryRequestResponseSuccess | retryRequestResponseError;
+
+export const getRetryRequestUrl = (id: string) => {
+  return `/api/requests/${id}/retry`;
+};
+
+export const retryRequest = async (
+  id: string,
+  options?: RequestInit,
+): Promise<retryRequestResponse> => {
+  const res = await fetch(getRetryRequestUrl(id), {
+    ...options,
+    method: "POST",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: retryRequestResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as retryRequestResponse;
+};
+
+export const getRetryRequestQueryKey = (id: string) => {
+  return ["POST", `/api/requests/${id}/retry`] as const;
+};
+
+export const getRetryRequestQueryOptions = <
+  TData = Awaited<ReturnType<typeof retryRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof retryRequest>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getRetryRequestQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof retryRequest>>> = ({
+    signal,
+  }) => retryRequest(id, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof retryRequest>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type RetryRequestQueryResult = NonNullable<
+  Awaited<ReturnType<typeof retryRequest>>
+>;
+export type RetryRequestQueryError = TransitionError;
+
+export function useRetryRequest<
+  TData = Awaited<ReturnType<typeof retryRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof retryRequest>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof retryRequest>>,
+          TError,
+          Awaited<ReturnType<typeof retryRequest>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useRetryRequest<
+  TData = Awaited<ReturnType<typeof retryRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof retryRequest>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof retryRequest>>,
+          TError,
+          Awaited<ReturnType<typeof retryRequest>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useRetryRequest<
+  TData = Awaited<ReturnType<typeof retryRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof retryRequest>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useRetryRequest<
+  TData = Awaited<ReturnType<typeof retryRequest>>,
+  TError = TransitionError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof retryRequest>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getRetryRequestQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type adoptProposalResponse200 = {
+  data: Request;
+  status: 200;
+};
+
+export type adoptProposalResponse404 = {
+  data: TransitionError;
+  status: 404;
+};
+
+export type adoptProposalResponse409 = {
+  data: TransitionError;
+  status: 409;
+};
+
+export type adoptProposalResponseSuccess = adoptProposalResponse200 & {
+  headers: Headers;
+};
+export type adoptProposalResponseError = (
+  adoptProposalResponse404 | adoptProposalResponse409
+) & {
+  headers: Headers;
+};
+
+export type adoptProposalResponse =
+  adoptProposalResponseSuccess | adoptProposalResponseError;
+
+export const getAdoptProposalUrl = (id: string) => {
+  return `/api/requests/${id}/adopt`;
+};
+
+export const adoptProposal = async (
+  id: string,
+  adoptProposalBody?: AdoptProposalBody,
+  options?: RequestInit,
+): Promise<adoptProposalResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  const res = await fetch(getAdoptProposalUrl(id), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(adoptProposalBody),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: adoptProposalResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as adoptProposalResponse;
+};
+
+export const getAdoptProposalQueryKey = (
+  id: string,
+  adoptProposalBody?: AdoptProposalBody,
+) => {
+  return ["POST", `/api/requests/${id}/adopt`, adoptProposalBody] as const;
+};
+
+export const getAdoptProposalQueryOptions = <
+  TData = Awaited<ReturnType<typeof adoptProposal>>,
+  TError = TransitionError,
+>(
+  id: string,
+  adoptProposalBody?: AdoptProposalBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adoptProposal>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdoptProposalQueryKey(id, adoptProposalBody);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adoptProposal>>> = ({
+    signal,
+  }) => adoptProposal(id, adoptProposalBody, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof adoptProposal>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdoptProposalQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adoptProposal>>
+>;
+export type AdoptProposalQueryError = TransitionError;
+
+export function useAdoptProposal<
+  TData = Awaited<ReturnType<typeof adoptProposal>>,
+  TError = TransitionError,
+>(
+  id: string,
+  adoptProposalBody: undefined | AdoptProposalBody,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adoptProposal>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adoptProposal>>,
+          TError,
+          Awaited<ReturnType<typeof adoptProposal>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdoptProposal<
+  TData = Awaited<ReturnType<typeof adoptProposal>>,
+  TError = TransitionError,
+>(
+  id: string,
+  adoptProposalBody?: AdoptProposalBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adoptProposal>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adoptProposal>>,
+          TError,
+          Awaited<ReturnType<typeof adoptProposal>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAdoptProposal<
+  TData = Awaited<ReturnType<typeof adoptProposal>>,
+  TError = TransitionError,
+>(
+  id: string,
+  adoptProposalBody?: AdoptProposalBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adoptProposal>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useAdoptProposal<
+  TData = Awaited<ReturnType<typeof adoptProposal>>,
+  TError = TransitionError,
+>(
+  id: string,
+  adoptProposalBody?: AdoptProposalBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adoptProposal>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAdoptProposalQueryOptions(
+    id,
+    adoptProposalBody,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type abortAgentRequestsResponse200 = {
+  data: AbortedRequests;
+  status: 200;
+};
+
+export type abortAgentRequestsResponseSuccess =
+  abortAgentRequestsResponse200 & {
+    headers: Headers;
+  };
+export type abortAgentRequestsResponse = abortAgentRequestsResponseSuccess;
+
+export const getAbortAgentRequestsUrl = (agentId: string) => {
+  return `/api/agents/${agentId}/abort-requests`;
+};
+
+export const abortAgentRequests = async (
+  agentId: string,
+  options?: RequestInit,
+): Promise<abortAgentRequestsResponse> => {
+  const res = await fetch(getAbortAgentRequestsUrl(agentId), {
+    ...options,
+    method: "POST",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: abortAgentRequestsResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as abortAgentRequestsResponse;
+};
+
+export const getAbortAgentRequestsQueryKey = (agentId: string) => {
+  return ["POST", `/api/agents/${agentId}/abort-requests`] as const;
+};
+
+export const getAbortAgentRequestsQueryOptions = <
+  TData = Awaited<ReturnType<typeof abortAgentRequests>>,
+  TError = unknown,
+>(
+  agentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof abortAgentRequests>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAbortAgentRequestsQueryKey(agentId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof abortAgentRequests>>
+  > = ({ signal }) => abortAgentRequests(agentId, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: agentId !== null && agentId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof abortAgentRequests>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AbortAgentRequestsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof abortAgentRequests>>
+>;
+export type AbortAgentRequestsQueryError = unknown;
+
+export function useAbortAgentRequests<
+  TData = Awaited<ReturnType<typeof abortAgentRequests>>,
+  TError = unknown,
+>(
+  agentId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof abortAgentRequests>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof abortAgentRequests>>,
+          TError,
+          Awaited<ReturnType<typeof abortAgentRequests>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAbortAgentRequests<
+  TData = Awaited<ReturnType<typeof abortAgentRequests>>,
+  TError = unknown,
+>(
+  agentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof abortAgentRequests>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof abortAgentRequests>>,
+          TError,
+          Awaited<ReturnType<typeof abortAgentRequests>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAbortAgentRequests<
+  TData = Awaited<ReturnType<typeof abortAgentRequests>>,
+  TError = unknown,
+>(
+  agentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof abortAgentRequests>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useAbortAgentRequests<
+  TData = Awaited<ReturnType<typeof abortAgentRequests>>,
+  TError = unknown,
+>(
+  agentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof abortAgentRequests>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAbortAgentRequestsQueryOptions(agentId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type getPageResponse200 = {
+  data: Page;
+  status: 200;
+};
+
+export type getPageResponse404 = {
+  data: CatalogError;
+  status: 404;
+};
+
+export type getPageResponseSuccess = getPageResponse200 & {
+  headers: Headers;
+};
+export type getPageResponseError = getPageResponse404 & {
+  headers: Headers;
+};
+
+export type getPageResponse = getPageResponseSuccess | getPageResponseError;
+
+export const getGetPageUrl = (id: string) => {
+  return `/api/pages/${id}`;
+};
+
+export const getPage = async (
+  id: string,
+  options?: RequestInit,
+): Promise<getPageResponse> => {
+  const res = await fetch(getGetPageUrl(id), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getPageResponse["data"] = body ? JSON.parse(body) : {};
+  return { data, status: res.status, headers: res.headers } as getPageResponse;
+};
+
+export const getGetPageQueryKey = (id: string) => {
+  return [`/api/pages/${id}`] as const;
+};
+
+export const getGetPageQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPage>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPage>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPageQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPage>>> = ({
+    signal,
+  }) => getPage(id, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getPage>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetPageQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPage>>
+>;
+export type GetPageQueryError = CatalogError;
+
+export function useGetPage<
+  TData = Awaited<ReturnType<typeof getPage>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPage>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPage>>,
+          TError,
+          Awaited<ReturnType<typeof getPage>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPage<
+  TData = Awaited<ReturnType<typeof getPage>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPage>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPage>>,
+          TError,
+          Awaited<ReturnType<typeof getPage>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPage<
+  TData = Awaited<ReturnType<typeof getPage>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPage>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetPage<
+  TData = Awaited<ReturnType<typeof getPage>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPage>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetPageQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetPageSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPage>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getPage>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPageQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPage>>> = ({
+    signal,
+  }) => getPage(id, { signal, ...fetchOptions });
+
+  return queryOptionsBuilder({
+    queryKey,
+    ...queryOptions,
+    queryFn: queryOptions?.queryFn ?? queryFn,
+  }) as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof getPage>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> } & {
+    throwOnError?: ((this: never, error: TError) => boolean) & {
+      readonly __inferenceOnly: never;
+    };
+  };
+};
+
+export type GetPageSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPage>>
+>;
+export type GetPageSuspenseQueryError = CatalogError;
+
+export function useGetPageSuspense<
+  TData = Awaited<ReturnType<typeof getPage>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getPage>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPageSuspense<
+  TData = Awaited<ReturnType<typeof getPage>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getPage>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPageSuspense<
+  TData = Awaited<ReturnType<typeof getPage>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getPage>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetPageSuspense<
+  TData = Awaited<ReturnType<typeof getPage>>,
+  TError = CatalogError,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getPage>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetPageSuspenseQueryOptions(id, options);
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type listPagesResponse200 = {
+  data: PageList;
+  status: 200;
+};
+
+export type listPagesResponseSuccess = listPagesResponse200 & {
+  headers: Headers;
+};
+export type listPagesResponse = listPagesResponseSuccess;
+
+export const getListPagesUrl = (fileId: string) => {
+  return `/api/files/${fileId}/pages`;
+};
+
+export const listPages = async (
+  fileId: string,
+  options?: RequestInit,
+): Promise<listPagesResponse> => {
+  const res = await fetch(getListPagesUrl(fileId), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listPagesResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as listPagesResponse;
+};
+
+export const getListPagesQueryKey = (fileId: string) => {
+  return [`/api/files/${fileId}/pages`] as const;
+};
+
+export const getListPagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPages>>,
+  TError = unknown,
+>(
+  fileId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listPages>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListPagesQueryKey(fileId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listPages>>> = ({
+    signal,
+  }) => listPages(fileId, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: fileId !== null && fileId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof listPages>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type ListPagesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPages>>
+>;
+export type ListPagesQueryError = unknown;
+
+export function useListPages<
+  TData = Awaited<ReturnType<typeof listPages>>,
+  TError = unknown,
+>(
+  fileId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listPages>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPages>>,
+          TError,
+          Awaited<ReturnType<typeof listPages>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListPages<
+  TData = Awaited<ReturnType<typeof listPages>>,
+  TError = unknown,
+>(
+  fileId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listPages>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPages>>,
+          TError,
+          Awaited<ReturnType<typeof listPages>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListPages<
+  TData = Awaited<ReturnType<typeof listPages>>,
+  TError = unknown,
+>(
+  fileId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listPages>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useListPages<
+  TData = Awaited<ReturnType<typeof listPages>>,
+  TError = unknown,
+>(
+  fileId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listPages>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getListPagesQueryOptions(fileId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListPagesSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPages>>,
+  TError = unknown,
+>(
+  fileId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listPages>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListPagesQueryKey(fileId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listPages>>> = ({
+    signal,
+  }) => listPages(fileId, { signal, ...fetchOptions });
+
+  return queryOptionsBuilder({
+    queryKey,
+    ...queryOptions,
+    queryFn: queryOptions?.queryFn ?? queryFn,
+  }) as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof listPages>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> } & {
+    throwOnError?: ((this: never, error: TError) => boolean) & {
+      readonly __inferenceOnly: never;
+    };
+  };
+};
+
+export type ListPagesSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPages>>
+>;
+export type ListPagesSuspenseQueryError = unknown;
+
+export function useListPagesSuspense<
+  TData = Awaited<ReturnType<typeof listPages>>,
+  TError = unknown,
+>(
+  fileId: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listPages>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListPagesSuspense<
+  TData = Awaited<ReturnType<typeof listPages>>,
+  TError = unknown,
+>(
+  fileId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listPages>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListPagesSuspense<
+  TData = Awaited<ReturnType<typeof listPages>>,
+  TError = unknown,
+>(
+  fileId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listPages>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useListPagesSuspense<
+  TData = Awaited<ReturnType<typeof listPages>>,
+  TError = unknown,
+>(
+  fileId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listPages>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getListPagesSuspenseQueryOptions(fileId, options);
 
   const query = useSuspenseQuery(
     queryOptions,

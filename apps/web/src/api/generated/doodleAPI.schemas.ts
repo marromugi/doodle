@@ -63,6 +63,10 @@ export interface AppItem {
   updatedAt: string;
   reference: ReleaseReference | null;
   hasNewerRelease: boolean;
+  inProgressRequests: number;
+  pageCount: number;
+  /** @nullable */
+  thumbnailDocument: string | null;
 }
 
 export type FileItem = DesignSystemItem | AppItem;
@@ -140,6 +144,59 @@ export type Thumbnail =
       state: "none";
     };
 
+export type RequestState = (typeof RequestState)[keyof typeof RequestState];
+
+export const RequestState = {
+  requested: "requested",
+  inProgress: "inProgress",
+  awaitingChoice: "awaitingChoice",
+  completed: "completed",
+  aborted: "aborted",
+} as const;
+
+export interface Request {
+  id: string;
+  page: string;
+  snapshot: string;
+  references: string[];
+  feedback: string;
+  /** @nullable */
+  previous: string | null;
+  state: RequestState;
+  /** @nullable */
+  agent: string | null;
+  delivered: boolean;
+  /** @nullable */
+  adoptedProposal: string | null;
+}
+
+export interface RequestList {
+  requests: Request[];
+}
+
+export interface TransitionError {
+  code: string;
+  message: string;
+  state?: RequestState;
+}
+
+export interface AbortedRequests {
+  aborted: string[];
+}
+
+export interface Page {
+  id: string;
+  file: string;
+  name: string;
+  skeleton: string;
+  /** @nullable */
+  adoptedProposal: string | null;
+}
+
+export interface PageList {
+  pages: Page[];
+}
+
 export type PutDocumentSummaryBody = {
   revision: number;
   updatedAt: string;
@@ -153,4 +210,20 @@ export type PutDocumentSummary200 = {
 export type GetDocumentSummary200 = {
   revision: number;
   updatedAt: string;
+};
+
+export type ListRequestsParams = {
+  state?: RequestState;
+};
+
+export type TakeRequestBody = {
+  agent: string;
+};
+
+export type CompleteRequestBody = {
+  agent: string;
+};
+
+export type AdoptProposalBody = {
+  proposal: string;
 };
