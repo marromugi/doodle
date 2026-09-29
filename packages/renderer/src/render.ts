@@ -102,6 +102,7 @@ function renderNode(
   node: RenderNode,
   parent: Direction | null,
   fonts: Font[],
+  parentBorder = 0,
 ): string {
   const absolute = node.position !== undefined;
   const styles = [
@@ -111,8 +112,8 @@ function renderNode(
   if (node.position) {
     styles.push(
       "position: absolute",
-      `left: ${node.position.x}px`,
-      `top: ${node.position.y}px`,
+      `left: ${node.position.x - parentBorder}px`,
+      `top: ${node.position.y - parentBorder}px`,
     );
   }
   const open = (extra: string[]) =>
@@ -139,12 +140,14 @@ function renderNode(
       if (node.radius !== undefined)
         extra.push(`border-radius: ${node.radius}px`);
       const children = node.children
-        .map((child) => renderNode(child, layout.direction, fonts))
+        .map((child) =>
+          renderNode(child, layout.direction, fonts, node.border?.width ?? 0),
+        )
         .join("");
       return `${open(extra)}${children}</div>`;
     }
     case "text": {
-      const extra: string[] = [];
+      const extra = ["white-space: pre"];
       const typography = node.typography;
       const family = typography?.family ?? fonts[0]?.family ?? "";
       extra.push(`font-family: ${quoteCss(family)}`);
