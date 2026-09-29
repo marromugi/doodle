@@ -718,9 +718,13 @@ describe("apply on a tree document", () => {
       "conflict",
       "conflict",
     ]);
-    expect(new Set(conflicts.map((reason) => reason.nodeId))).toEqual(
-      new Set(["t2", "box", "root"]),
-    );
+    expect(
+      new Set(
+        conflicts.map((reason) =>
+          "nodeId" in reason ? reason.nodeId : undefined,
+        ),
+      ),
+    ).toEqual(new Set(["t2", "box", "root"]));
 
     const shapeOnly = failures(
       onTree(D4(), {
