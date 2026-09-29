@@ -6,9 +6,7 @@ describe("Node", () => {
   test("keeps a brace-wrapped string as the literal string", () => {
     const result = Node.safeParse({ type: "text", id: "t1", text: "{name}" });
     expect(result.success).toBe(true);
-    if (result.success && result.data.type === "text") {
-      expect(result.data.text).toBe("{name}");
-    }
+    expect(result.data).toMatchObject({ type: "text", text: "{name}" });
   });
 
   test("reads an image node", () => {
