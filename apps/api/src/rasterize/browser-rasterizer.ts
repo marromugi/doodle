@@ -8,14 +8,22 @@ import type {
 } from "@doodle/design-doc";
 import { renderHtml, type Font } from "@doodle/renderer";
 
-type Box = { width: number; height: number };
+type Measured = {
+  /** Families whose font data could not be loaded. */
+  failedFonts: string[];
+  /** The drawn root's box; null when nothing is drawn. */
+  box: { width: number; height: number } | null;
+};
 
-/** Waits for the fonts, then measures the drawn root; null when nothing is drawn. */
+/** Waits for the fonts, then reports failed font loads and the drawn root's box. */
 const MEASURE_ROOT = `document.fonts.ready.then(() => {
+  const failedFonts = [...document.fonts]
+    .filter((face) => face.status === "error")
+    .map((face) => face.family.replace(/^"|"$/g, "").replace(/\\\\(.)/g, "$1"));
   const root = document.body.firstElementChild;
-  if (!root) return null;
+  if (!root) return { failedFonts, box: null };
   const box = root.getBoundingClientRect();
-  return { width: box.width, height: box.height };
+  return { failedFonts, box: { width: box.width, height: box.height } };
 })`;
 
 function failure(message: string): Result<RasterImage, RasterizeFailure> {
@@ -43,23 +51,29 @@ export function createBrowserRasterizer(deps: {
         try {
           const page = await browser.newPage({ deviceScaleFactor: 1 });
           await page.setContent(html.value);
-          const box = (await page.evaluate(MEASURE_ROOT)) as Box | null;
+          const { failedFonts, box } = (await page.evaluate(
+            MEASURE_ROOT,
+          )) as Measured;
+          if (failedFonts.length > 0) {
+            return failure(
+              `font data could not be loaded for: ${failedFonts.join(", ")}`,
+            );
+          }
           if (box === null) return failure("the shape has no root to draw");
-          await page.setViewportSize({
-            width: Math.max(1, Math.ceil(box.width)),
-            height: Math.max(1, Math.ceil(box.height)),
-          });
+          const width = Math.max(1, Math.ceil(box.width));
+          const height = Math.max(1, Math.ceil(box.height));
+          await page.setViewportSize({ width, height });
           const bytes = await page.screenshot({
             type: "png",
-            clip: { x: 0, y: 0, width: box.width, height: box.height },
+            clip: { x: 0, y: 0, width, height },
           });
           return {
             ok: true,
             value: {
               contentType: "image/png",
               bytes: new Uint8Array(bytes),
-              width: box.width,
-              height: box.height,
+              width,
+              height,
             },
           };
         } finally {
