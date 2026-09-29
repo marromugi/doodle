@@ -28,7 +28,8 @@ describe("Node", () => {
     };
     expect(Node.safeParse(frame).success).toBe(true);
     expect(
-      Node.safeParse({ ...frame, layout: { direction: "grid" } }).success,
+      Node.safeParse({ ...frame, layout: { direction: "grid", gap: 8 } })
+        .success,
     ).toBe(false);
   });
 

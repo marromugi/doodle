@@ -6,14 +6,14 @@ import { Component } from "./scope";
 import { Typography } from "./tokens";
 import { Value } from "./value";
 
-const base = z.number();
+const base = z.number().int().nonnegative();
 
 export const EditOperation = z.discriminatedUnion("type", [
   z.strictObject({
     type: z.literal("add"),
     base,
     parent: z.string(),
-    index: z.number(),
+    index: z.number().int().nonnegative(),
     node: Node,
   }),
   z.strictObject({
@@ -29,7 +29,7 @@ export const EditOperation = z.discriminatedUnion("type", [
     base,
     node: z.string(),
     parent: z.string(),
-    index: z.number(),
+    index: z.number().int().nonnegative(),
   }),
   z.strictObject({
     type: z.enum(["add-token", "change-token"]),

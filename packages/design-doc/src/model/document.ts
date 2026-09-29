@@ -20,7 +20,7 @@ export type History = z.infer<typeof History>;
 
 export const TreeDocument = z.strictObject({
   kind: z.literal("tree"),
-  revision: z.number(),
+  revision: z.number().int().nonnegative(),
   release: ReleaseRef.nullable(),
   root: Node,
   history: History,
@@ -30,7 +30,7 @@ export type TreeDocument = z.infer<typeof TreeDocument>;
 export const DraftDocument = z
   .strictObject({
     kind: z.literal("draft"),
-    revision: z.number(),
+    revision: z.number().int().nonnegative(),
     tokens: Tokens,
     components: z.record(z.string(), Component),
     history: History,
