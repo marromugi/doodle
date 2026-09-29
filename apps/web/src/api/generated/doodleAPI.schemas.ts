@@ -39,6 +39,7 @@ export interface DesignSystemItem {
   latestRelease: ReleaseSummary | null;
   usedByApps: number;
   referenced: boolean;
+  hasUnreleasedChanges: boolean;
 }
 
 export type AppItemKind = (typeof AppItemKind)[keyof typeof AppItemKind];
@@ -109,3 +110,47 @@ export interface CatalogError {
   code: string;
   message: string;
 }
+
+export type ThumbnailPut =
+  | {
+      state: "ready";
+      revision: number;
+      contentType: string;
+      image: string;
+    }
+  | {
+      state: "failed";
+      revision: number;
+      reason: string;
+    };
+
+export type Thumbnail =
+  | {
+      state: "ready";
+      revision: number;
+      contentType: string;
+      image: string;
+    }
+  | {
+      state: "failed";
+      revision: number;
+      reason: string;
+    }
+  | {
+      state: "none";
+    };
+
+export type PutDocumentSummaryBody = {
+  revision: number;
+  updatedAt: string;
+};
+
+export type PutDocumentSummary200 = {
+  revision: number;
+  updatedAt: string;
+};
+
+export type GetDocumentSummary200 = {
+  revision: number;
+  updatedAt: string;
+};

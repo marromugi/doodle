@@ -86,6 +86,14 @@ type ReleaseRow = {
   design_system_id: string;
   created_at: string;
   message: string | null;
+  draft_revision: number;
+};
+
+type DocumentSummaryRow = {
+  file_id: string;
+  kind: string;
+  updated_at: string;
+  revision: number;
 };
 
 function isNewer(a: ReleaseRow, b: ReleaseRow): boolean {
@@ -94,18 +102,40 @@ function isNewer(a: ReleaseRow, b: ReleaseRow): boolean {
 }
 
 export async function listFiles(db: D1Database): Promise<FileItem[]> {
-  const [files, releases] = await db.batch<FileRow | ReleaseRow>([
+  const [files, releases, summaries] = await db.batch<
+    FileRow | ReleaseRow | DocumentSummaryRow
+  >([
     db
       .prepare(
         "SELECT id, kind, name, created_at, reference_design_system_id, reference_release_id FROM files WHERE workspace_id = ?",
       )
       .bind(PERSONAL_WORKSPACE_ID),
     db.prepare(
-      "SELECT id, design_system_id, created_at, message FROM releases",
+      "SELECT id, design_system_id, created_at, message, draft_revision FROM releases",
+    ),
+    db.prepare(
+      `SELECT d.file_id, d.kind, s.updated_at, s.revision
+       FROM documents d JOIN document_summaries s ON s.document_id = d.id`,
     ),
   ]);
   const fileRows = files!.results as FileRow[];
   const releaseRows = releases!.results as ReleaseRow[];
+  const summaryRows = summaries!.results as DocumentSummaryRow[];
+
+  const summaryUpdatedAt = new Map<string, string>();
+  const draftRevisions = new Map<string, number>();
+  for (const summary of summaryRows) {
+    const latest = summaryUpdatedAt.get(summary.file_id);
+    if (
+      latest === undefined ||
+      Date.parse(summary.updated_at) > Date.parse(latest)
+    ) {
+      summaryUpdatedAt.set(summary.file_id, summary.updated_at);
+    }
+    if (summary.kind === "dsDraft") {
+      draftRevisions.set(summary.file_id, summary.revision);
+    }
+  }
 
   const releaseById = new Map(releaseRows.map((row) => [row.id, row]));
   const latestByDesignSystem = new Map<string, ReleaseRow>();
@@ -127,11 +157,12 @@ export async function listFiles(db: D1Database): Promise<FileItem[]> {
     if (row.kind === "designSystem") {
       const latest = latestByDesignSystem.get(row.id);
       const usedByApps = appsByDesignSystem.get(row.id) ?? 0;
+      const draftRevision = draftRevisions.get(row.id) ?? 0;
       return {
         id: row.id,
         kind: "designSystem",
         name: row.name,
-        updatedAt: row.created_at,
+        updatedAt: summaryUpdatedAt.get(row.id) ?? row.created_at,
         latestRelease: latest
           ? {
               id: latest.id,
@@ -141,6 +172,10 @@ export async function listFiles(db: D1Database): Promise<FileItem[]> {
           : null,
         usedByApps,
         referenced: usedByApps > 0,
+        hasUnreleasedChanges:
+          latest === undefined
+            ? draftRevision >= 1
+            : draftRevision > latest.draft_revision,
       };
     }
     const referencedRelease =
@@ -155,7 +190,7 @@ export async function listFiles(db: D1Database): Promise<FileItem[]> {
       id: row.id,
       kind: "app",
       name: row.name,
-      updatedAt: row.created_at,
+      updatedAt: summaryUpdatedAt.get(row.id) ?? row.created_at,
       reference:
         row.reference_design_system_id !== null &&
         row.reference_release_id !== null

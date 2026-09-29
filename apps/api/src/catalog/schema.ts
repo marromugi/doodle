@@ -34,6 +34,7 @@ const DesignSystemItemSchema = z
     latestRelease: ReleaseSummarySchema.nullable(),
     usedByApps: z.number().int(),
     referenced: z.boolean(),
+    hasUnreleasedChanges: z.boolean(),
   })
   .openapi("DesignSystemItem");
 
@@ -93,6 +94,43 @@ export const DocumentEntrySchema = z
   .openapi("DocumentEntry");
 
 export type DocumentEntry = z.infer<typeof DocumentEntrySchema>;
+
+export const ThumbnailPutSchema = z
+  .discriminatedUnion("state", [
+    z.object({
+      state: z.literal("ready"),
+      revision: z.number().int(),
+      contentType: z.string(),
+      image: z.base64(),
+    }),
+    z.object({
+      state: z.literal("failed"),
+      revision: z.number().int(),
+      reason: z.string(),
+    }),
+  ])
+  .openapi("ThumbnailPut");
+
+export type ThumbnailPut = z.infer<typeof ThumbnailPutSchema>;
+
+export const ThumbnailSchema = z
+  .discriminatedUnion("state", [
+    z.object({
+      state: z.literal("ready"),
+      revision: z.number().int(),
+      contentType: z.string(),
+      image: z.string(),
+    }),
+    z.object({
+      state: z.literal("failed"),
+      revision: z.number().int(),
+      reason: z.string(),
+    }),
+    z.object({ state: z.literal("none") }),
+  ])
+  .openapi("Thumbnail");
+
+export type Thumbnail = z.infer<typeof ThumbnailSchema>;
 
 export const CatalogErrorSchema = z
   .object({ code: z.string(), message: z.string() })
