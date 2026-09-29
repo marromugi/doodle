@@ -98,3 +98,16 @@ export async function getDocument(
       return { ok: true, entry: { ...base, kind: "dsDraft", release: null } };
   }
 }
+
+export type IsDocumentFileDeletedResult =
+  { ok: true; deleted: boolean } | Failure<"document_not_found">;
+
+// Nothing records a deleted file yet, so a registered document is never deleted.
+export async function isDocumentFileDeleted(
+  db: D1Database,
+  id: string,
+): Promise<IsDocumentFileDeletedResult> {
+  const document = await getDocument(db, id);
+  if (!document.ok) return document;
+  return { ok: true, deleted: false };
+}
