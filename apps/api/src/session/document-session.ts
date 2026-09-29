@@ -36,6 +36,7 @@ const documentDeleted: SessionFailure = {
  */
 export abstract class DocumentSessionBase extends DurableObject<Env> {
   #tail: Promise<void> = Promise.resolve();
+  #scopes = new Map<string, Scope>();
 
   protected abstract catalog(): CatalogPort;
 
@@ -141,12 +142,23 @@ export abstract class DocumentSessionBase extends DurableObject<Env> {
 
   async #operate(socket: WebSocket, operation: EditOperation): Promise<void> {
     const identity = ClientIdentity.parse(socket.deserializeAttachment());
-    const document = await this.#load();
-    const registration = await this.catalog().registration(this.#documentId());
+    const id = this.#documentId();
+    const [document, registration, deleted] = await Promise.all([
+      this.#load(),
+      this.catalog().registration(id),
+      this.catalog().isFileDeleted(id),
+    ]);
+    if (deleted) {
+      send(socket, { type: "failure", failure: documentDeleted });
+      return;
+    }
     if (registration === null)
       throw new Error("The document is not registered.");
 
-    const refusal = await this.#refusal(identity, registration);
+    const [refusal, scope] = await Promise.all([
+      this.#refusal(identity, registration),
+      document.kind === "draft" ? EMPTY_SCOPE : this.#scopeOf(registration),
+    ]);
     if (refusal !== null) {
       send(socket, { type: "failure", failure: refusal });
       return;
@@ -155,7 +167,7 @@ export abstract class DocumentSessionBase extends DurableObject<Env> {
     const result =
       document.kind === "draft"
         ? apply(document, operation)
-        : apply(document, operation, await this.#scopeOf(registration));
+        : apply(document, operation, scope);
     if (!result.ok) {
       send(socket, { type: "failure", failure: failureOf(result.reasons) });
       return;
@@ -167,11 +179,16 @@ export abstract class DocumentSessionBase extends DurableObject<Env> {
       updatedAt: new Date().toISOString(),
     });
     for (const each of this.ctx.getWebSockets()) {
-      send(each, {
-        type: "applied",
-        document: saved,
-        revision: saved.revision,
-      });
+      if (each.readyState !== WebSocket.READY_STATE_OPEN) continue;
+      try {
+        send(each, {
+          type: "applied",
+          document: saved,
+          revision: saved.revision,
+        });
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
 
@@ -191,11 +208,15 @@ export abstract class DocumentSessionBase extends DurableObject<Env> {
     return agentRefusal(standing, identity.agentId);
   }
 
+  // A release never changes, so its scope is read once.
   async #scopeOf(registration: DocumentRegistration): Promise<Scope> {
     const release = "release" in registration ? registration.release : null;
     if (release === null) return EMPTY_SCOPE;
+    const known = this.#scopes.get(release);
+    if (known !== undefined) return known;
     const scope = await this.catalog().releaseScope(release);
     if (scope === null) throw new Error("The release does not exist.");
+    this.#scopes.set(release, scope);
     return scope;
   }
 }

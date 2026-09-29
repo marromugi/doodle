@@ -4,7 +4,7 @@ import * as z from "zod";
 /** Declared when a client connects: a person, or an agent registered as `agentId`. */
 export const ClientIdentity = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("human") }),
-  z.strictObject({ kind: z.literal("agent"), agentId: z.string() }),
+  z.strictObject({ kind: z.literal("agent"), agentId: z.string().min(1) }),
 ]);
 export type ClientIdentity = z.infer<typeof ClientIdentity>;
 
