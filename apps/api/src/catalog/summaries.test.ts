@@ -40,13 +40,14 @@ async function addApp(
   name: string,
   createdAt = "2026-01-01T00:00:00Z",
 ): Promise<string> {
-  const result = await addFile(
-    db,
-    { kind: "app", name, reference: null },
-    () => new Date(createdAt),
-  );
-  if (!result.ok) throw new Error(result.message);
-  return result.file.id;
+  const id = `app_${name}`;
+  await db
+    .prepare(
+      "INSERT INTO files (id, workspace_id, kind, name, created_at, reference_design_system_id, reference_release_id) VALUES (?, 'personal', 'app', ?, ?, NULL, NULL)",
+    )
+    .bind(id, name, createdAt)
+    .run();
+  return id;
 }
 
 async function addDesignSystem(name = "Acme DS"): Promise<string> {
