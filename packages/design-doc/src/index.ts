@@ -14,3 +14,4 @@ export * from "./rebase/failure";
 export * from "./resolve/failure";
 export * from "./roles";
 export * from "./validate/failure";
+export * from "./validate/validate";
