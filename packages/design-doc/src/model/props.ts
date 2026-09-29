@@ -5,7 +5,7 @@ import { Value } from "./value";
 
 const ScalarType = z.enum(["string", "number", "boolean", "node"]);
 
-export const PropType = z.union([
+export const PropType = z.discriminatedUnion("type", [
   z.strictObject({ type: ScalarType }),
   z.strictObject({
     type: z.literal("enum"),
@@ -29,7 +29,7 @@ export type PropType = z.infer<typeof PropType>;
 
 const required = z.literal(true).optional();
 
-const PropDefShape = z.union([
+const PropDefShape = z.discriminatedUnion("type", [
   z.strictObject({
     type: ScalarType,
     required,

@@ -83,5 +83,8 @@ export const SwitchReleaseOperation = z.strictObject({
 });
 export type SwitchReleaseOperation = z.infer<typeof SwitchReleaseOperation>;
 
-export const Operation = z.union([EditOperation, SwitchReleaseOperation]);
+export const Operation = z.discriminatedUnion("type", [
+  EditOperation,
+  SwitchReleaseOperation,
+]);
 export type Operation = z.infer<typeof Operation>;
