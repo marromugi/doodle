@@ -295,17 +295,47 @@ const reaches = (edges: Edge[], from: string, target: string): boolean => {
   return false;
 };
 
-const validateDraft = (doc: DraftDocument): ValidateFailure[] => {
-  const scope: Scope = { tokens: doc.tokens, components: doc.components };
+const walkDefault = (
+  def: PropDef,
+  name: string,
+  ctx: Ctx,
+  nodeId: string,
+): void => {
+  if (def.default !== undefined) {
+    walkValue(def.default, null, ctx, nodeId);
+    if (!matchesType(def.default, def, ctx.props)) {
+      fail(
+        ctx,
+        nodeId,
+      )({
+        code: "prop-type-mismatch",
+        prop: name,
+        message: `the default of "${name}" does not match its type`,
+      });
+    }
+  }
+  if (def.type === "object") {
+    for (const field of Object.values(def.fields)) {
+      walkDefault(field, name, ctx, nodeId);
+    }
+  }
+};
+
+/** Checks every component tree and prop default in `scope`, and cycles among them. */
+const validateComponents = (scope: Scope): ValidateFailure[] => {
   const shared: Shared = { out: [], seenIds: new Set(), edges: [] };
-  for (const [id, component] of Object.entries(doc.components)) {
-    walkNode(component.root, {
+  for (const [id, component] of Object.entries(scope.components)) {
+    const ctx: Ctx = {
       ...shared,
       scope,
       props: component.props,
       component: id,
       repeats: [],
-    });
+    };
+    for (const [name, def] of Object.entries(component.props)) {
+      walkDefault(def, name, ctx, component.root.id);
+    }
+    walkNode(component.root, ctx);
   }
   for (const edge of shared.edges) {
     if (reaches(shared.edges, edge.to, edge.from)) {
@@ -319,6 +349,9 @@ const validateDraft = (doc: DraftDocument): ValidateFailure[] => {
   return shared.out;
 };
 
+const validateDraft = (doc: DraftDocument): ValidateFailure[] =>
+  validateComponents({ tokens: doc.tokens, components: doc.components });
+
 const validateTree = (doc: TreeDocument, scope: Scope): ValidateFailure[] => {
   const out: ValidateFailure[] = [];
   walkNode(doc.root, {
@@ -330,7 +363,7 @@ const validateTree = (doc: TreeDocument, scope: Scope): ValidateFailure[] => {
     component: null,
     repeats: [],
   });
-  return out;
+  return [...out, ...validateComponents(scope)];
 };
 
 export const validate: Validate = (

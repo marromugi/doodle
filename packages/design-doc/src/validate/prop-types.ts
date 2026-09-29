@@ -7,12 +7,29 @@ export const has = (obj: object, key: string): boolean =>
 type Typed = PropType | PropDef;
 
 const sameType = (from: Typed, to: Typed): boolean => {
+  if (from.type === "enum" && to.type === "string") return true;
   if (from.type !== to.type) return false;
   if (from.type === "enum" && to.type === "enum") {
     return from.values.every((v) => to.values.includes(v));
   }
   if (from.type === "token" && to.type === "token") {
     return to.kind === undefined || from.kind === to.kind;
+  }
+  if (from.type === "array" && to.type === "array") {
+    return sameType(from.of, to.of);
+  }
+  if (from.type === "object" && to.type === "object") {
+    const given = from.fields;
+    const fields = to.fields;
+    return (
+      Object.keys(given).every(
+        (key) => has(fields, key) && sameType(given[key]!, fields[key]!),
+      ) &&
+      Object.keys(fields).every(
+        (key) =>
+          fields[key]!.required !== true || given[key]?.required === true,
+      )
+    );
   }
   return true;
 };
