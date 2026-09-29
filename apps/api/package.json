@@ -14,6 +14,7 @@
   "dependencies": {
     "@cloudflare/playwright": "^1.3.6",
     "@doodle/design-doc": "workspace:*",
+    "@doodle/protocol": "workspace:*",
     "@doodle/renderer": "workspace:*",
     "@hono/zod-openapi": "^1.6.3",
     "hono": "^4.13.11",

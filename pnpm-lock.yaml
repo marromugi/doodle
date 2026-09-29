@@ -32,6 +32,9 @@ importers:
       '@doodle/design-doc':
         specifier: workspace:*
         version: link:../../packages/design-doc
+      '@doodle/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
       '@doodle/renderer':
         specifier: workspace:*
         version: link:../../packages/renderer
@@ -161,6 +164,19 @@ importers:
       '@doodle/design-doc':
         specifier: workspace:*
         version: link:../design-doc
+    devDependencies:
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.6.3)(@vitest/browser-playwright@4.1.11)(jsdom@30.1.1)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/protocol:
+    dependencies:
+      '@doodle/design-doc':
+        specifier: workspace:*
+        version: link:../design-doc
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       vitest:
         specifier: ^4.1.11
