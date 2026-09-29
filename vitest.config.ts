@@ -5,6 +5,7 @@ export default defineConfig({
     projects: [
       "apps/api",
       "packages/design-doc",
+      "packages/renderer",
       "packages/llm-json",
       "apps/web/vitest.unit.config.ts",
       "apps/web/vitest.storybook.config.ts",

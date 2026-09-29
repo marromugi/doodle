@@ -1,0 +1,21 @@
+{
+  "name": "@doodle/renderer",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@doodle/design-doc": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/browser": "^4.1.11",
+    "@vitest/browser-playwright": "^4.1.11",
+    "playwright": "^1.63.0",
+    "vitest": "^4.1.11"
+  }
+}

@@ -10,3 +10,5 @@ storybook-static/
 .tanstack/
 .output/
 .dev.vars
+.vitest-attachments/
+__screenshots__/
