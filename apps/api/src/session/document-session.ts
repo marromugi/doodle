@@ -14,7 +14,11 @@ import {
 } from "@doodle/protocol";
 import { DurableObject } from "cloudflare:workers";
 
-import { unreadableCatalog, type CatalogPort } from "./catalog-port";
+import {
+  unreadableCatalog,
+  type CatalogPort,
+  type Registration,
+} from "./catalog-port";
 import { DOCUMENT_ID_HEADER } from "./connection";
 
 const CONTENT = "content";
@@ -56,13 +60,16 @@ const inconsistent = (what: string): SessionFailure =>
   plain("catalog_inconsistent", `The catalog has no ${what}.`);
 const deleted = plain("document_deleted", "The document was deleted.");
 
-const send = (socket: WebSocket, message: ServerMessage): void => {
+const sendText = (socket: WebSocket, text: string): void => {
   try {
-    socket.send(JSON.stringify(message));
+    socket.send(text);
   } catch {
     // The peer is gone; the close event follows.
   }
 };
+
+const send = (socket: WebSocket, message: ServerMessage): void =>
+  sendText(socket, JSON.stringify(message));
 
 export class DocumentSession extends DurableObject<Env> {
   /** Replaced in tests. */
@@ -70,6 +77,7 @@ export class DocumentSession extends DurableObject<Env> {
 
   #queue: Promise<unknown> = Promise.resolve();
   #scopes = new Map<string, Scope>();
+  #registrations = new Map<string, Registration>();
 
   /** Runs one step after every earlier step has finished. */
   #enqueue<T>(step: () => Promise<T>): Promise<T> {
@@ -84,7 +92,7 @@ export class DocumentSession extends DurableObject<Env> {
         return {
           ok: false,
           code: "document_deleted",
-          message: "The document was deleted.",
+          message: deleted.message,
         };
       }
       if ((await this.ctx.storage.get(CONTENT)) !== undefined) {
@@ -109,7 +117,7 @@ export class DocumentSession extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     const documentId = request.headers.get(DOCUMENT_ID_HEADER);
     const identity = identityFromSearch(new URL(request.url).searchParams);
-    if (request.headers.get("Upgrade") !== "websocket") {
+    if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") {
       return new Response("Expected a WebSocket upgrade.", { status: 426 });
     }
     if (documentId === null || identity === null) {
@@ -122,9 +130,7 @@ export class DocumentSession extends DurableObject<Env> {
     server.serializeAttachment(attachment);
 
     try {
-      const refusal = await this.#enqueue(() =>
-        this.#connectionRefusal(documentId),
-      );
+      const refusal = await this.#connectionRefusal(documentId);
       if (refusal) {
         send(server, { type: "failure", failure: refusal });
         server.close(CLOSE_POLICY, refusal.code);
@@ -242,7 +248,8 @@ export class DocumentSession extends DurableObject<Env> {
       document: result.value,
       revision: result.value.revision,
     };
-    for (const each of this.ctx.getWebSockets()) send(each, applied);
+    const text = JSON.stringify(applied);
+    for (const each of this.ctx.getWebSockets()) sendText(each, text);
   }
 
   async #save(document: Document): Promise<void> {
@@ -256,8 +263,14 @@ export class DocumentSession extends DurableObject<Env> {
     documentId: string,
     agentId: string,
   ): Promise<SessionFailure | null> {
-    const registration = await this.catalog.registration(documentId);
+    const cached = this.#registrations.get(documentId);
+    const registration = cached
+      ? ({ status: "found", value: cached } as const)
+      : await this.catalog.registration(documentId);
     if (registration.status === "unreadable") return unavailable;
+    if (registration.status === "found") {
+      this.#registrations.set(documentId, registration.value);
+    }
     if (registration.status === "absent") {
       return plain(
         "document_not_registered",

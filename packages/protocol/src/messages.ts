@@ -18,7 +18,12 @@ export const identityToSearch = (identity: Identity): URLSearchParams =>
 export const identityFromSearch = (
   search: URLSearchParams,
 ): Identity | null => {
-  const parsed = Identity.safeParse(Object.fromEntries(search.entries()));
+  const parsed = Identity.safeParse({
+    kind: search.get("kind"),
+    ...(search.get("kind") === "agent"
+      ? { agentId: search.get("agentId") }
+      : {}),
+  });
   return parsed.success ? parsed.data : null;
 };
 
