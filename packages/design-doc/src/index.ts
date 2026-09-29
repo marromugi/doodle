@@ -1,3 +1,4 @@
+export * from "./apply/apply";
 export * from "./apply/failure";
 export * from "./model/discrepancy";
 export * from "./model/document";
