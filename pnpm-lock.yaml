@@ -147,6 +147,16 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@26.6.3)(@vitest/browser-playwright@4.1.11)(jsdom@30.1.1)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages/llm-json:
+    dependencies:
+      '@doodle/design-doc':
+        specifier: workspace:*
+        version: link:../design-doc
+    devDependencies:
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.6.3)(@vitest/browser-playwright@4.1.11)(jsdom@30.1.1)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
 packages:
 
   '@adobe/css-tools@4.5.0':
