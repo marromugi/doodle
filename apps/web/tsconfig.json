@@ -1,13 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["vite/client"]
+    "types": ["vite/client", "@testing-library/jest-dom"]
   },
-  "include": [
-    "src",
-    ".storybook",
-    "vite.config.ts",
-    "vitest.config.ts",
-    "orval.config.ts"
-  ]
+  "include": ["src", ".storybook", "*.config.ts"]
 }

@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+
 import { app, openAPIConfig } from "../src/app";
 
 const doc = app.getOpenAPI31Document(openAPIConfig);

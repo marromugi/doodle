@@ -1,9 +1,9 @@
+import { exports } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
-import app from "./index";
 
 describe("GET /api/health", () => {
   it("returns ok", async () => {
-    const res = await app.request("/api/health");
+    const res = await exports.default.fetch("http://localhost/api/health");
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ status: "ok" });
   });

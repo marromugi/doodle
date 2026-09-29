@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
-    "types": ["./worker-configuration.d.ts", "node"]
+    "types": [
+      "./worker-configuration.d.ts",
+      "node",
+      "@cloudflare/vitest-plugin/types"
+    ]
   },
-  "include": ["src", "scripts"]
+  "include": ["src", "scripts", "vitest.config.ts"]
 }

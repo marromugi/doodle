@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
 import { getGetHealthSuspenseQueryOptions } from "../api/generated/system/system";
 
 export const Route = createFileRoute("/")({
