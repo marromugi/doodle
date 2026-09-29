@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 
+import { apply } from "../apply/apply";
 import type { DraftDocument, TreeDocument } from "../model/document";
 import type { Node } from "../model/node";
 import type { Component, Scope } from "../model/scope";
@@ -405,5 +406,154 @@ describe("validate", () => {
     expect(failures).toEqual([
       expect.objectContaining({ code: "unknown-token", nodeId: "btn" }),
     ]);
+  });
+
+  test("returns an invalid colour for a url() background and none for a hex colour", () => {
+    expect(
+      validate(
+        page({ background: "url(https://example.com/a.png)" }, []),
+        scope,
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        code: "invalid-color",
+        nodeId: "root",
+        key: "background",
+        value: "url(https://example.com/a.png)",
+      }),
+    ]);
+    expect(validate(page({ background: "#1a73e8" }, []), scope)).toEqual([]);
+  });
+
+  test("returns an invalid colour keyed color for a text and keyed border.color for a frame", () => {
+    expect(
+      validate(
+        page({}, [
+          { type: "text", id: "t1", text: "A", color: "currentcolor" },
+        ]),
+        scope,
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        code: "invalid-color",
+        nodeId: "t1",
+        key: "color",
+      }),
+    ]);
+    expect(
+      validate(page({ border: { color: "red; x: 1", width: 1 } }, []), scope),
+    ).toEqual([
+      expect.objectContaining({
+        code: "invalid-color",
+        nodeId: "root",
+        key: "border.color",
+      }),
+    ]);
+  });
+
+  test("returns an invalid colour for a match case and for a match default that are not colours", () => {
+    const tone: Component["props"] = {
+      tone: { type: "enum", values: ["a", "b"], required: true },
+    };
+    const badge = (color: unknown): Record<string, Component> => ({
+      cmp_badge: {
+        name: "Badge",
+        props: tone,
+        root: {
+          type: "frame",
+          id: "badge",
+          children: [{ type: "text", id: "badge-t", text: "A", color }],
+        } as Node,
+      },
+    });
+    const invalid = (failures: { code: string }[]) =>
+      failures.filter((f) => f.code === "invalid-color");
+    expect(
+      invalid(
+        validate(
+          draft(
+            badge({
+              match: "tone",
+              cases: { a: "#000000", b: "not-a-colour" },
+            }),
+          ),
+        ),
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        code: "invalid-color",
+        nodeId: "badge-t",
+        key: "color",
+        value: "not-a-colour",
+      }),
+    ]);
+    expect(
+      invalid(
+        validate(
+          draft(
+            badge({
+              match: "tone",
+              cases: { a: "#000000", b: "#ffffff" },
+              default: "also-not",
+            }),
+          ),
+        ),
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        code: "invalid-color",
+        nodeId: "badge-t",
+        key: "color",
+        value: "also-not",
+      }),
+    ]);
+  });
+
+  test("returns one invalid colour for the text colour when a prop reference and a text body look like colours", () => {
+    const failures = validate(
+      draft({
+        cmp_fill: {
+          name: "Fill",
+          props: { fill: { type: "string", default: "url(x)" } },
+          root: {
+            type: "frame",
+            id: "fill",
+            background: { prop: "fill" },
+            children: [
+              { type: "text", id: "fill-t", text: "url(x)", color: "nope" },
+            ],
+          } as Node,
+        },
+      }),
+    );
+    expect(failures).toEqual([
+      expect.objectContaining({
+        code: "invalid-color",
+        key: "color",
+        value: "nope",
+      }),
+    ]);
+  });
+
+  test("fails an apply with an invalid colour when the document already holds a non-colour background", () => {
+    const doc = page({ background: "nope" }, [
+      { type: "text", id: "t1", text: "A" },
+    ]);
+    const result = apply(
+      doc,
+      { type: "set", base: 0, node: "t1", key: "text", value: "B" },
+      scope,
+    );
+    expect(result).toEqual({
+      ok: false,
+      reasons: [
+        expect.objectContaining({
+          code: "invalid-color",
+          nodeId: "root",
+          key: "background",
+          value: "nope",
+        }),
+      ],
+    });
   });
 });
