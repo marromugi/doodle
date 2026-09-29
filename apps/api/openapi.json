@@ -19,6 +19,304 @@
         "required": [
           "status"
         ]
+      },
+      "FileList": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileItem"
+            }
+          }
+        },
+        "required": [
+          "files"
+        ]
+      },
+      "FileItem": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/DesignSystemItem"
+          },
+          {
+            "$ref": "#/components/schemas/AppItem"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "designSystem": "#/components/schemas/DesignSystemItem",
+            "app": "#/components/schemas/AppItem"
+          }
+        }
+      },
+      "DesignSystemItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "designSystem"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "latestRelease": {
+            "$ref": "#/components/schemas/ReleaseSummary"
+          },
+          "usedByApps": {
+            "type": "integer"
+          },
+          "referenced": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "updatedAt",
+          "latestRelease",
+          "usedByApps",
+          "referenced"
+        ]
+      },
+      "ReleaseSummary": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "message"
+        ]
+      },
+      "AppItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "app"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "reference": {
+            "$ref": "#/components/schemas/ReleaseReference"
+          },
+          "hasNewerRelease": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "updatedAt",
+          "reference",
+          "hasNewerRelease"
+        ]
+      },
+      "ReleaseReference": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "designSystem": {
+            "type": "string"
+          },
+          "release": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "designSystem",
+          "release"
+        ]
+      },
+      "DocumentEntry": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "skeleton"
+                ]
+              },
+              "page": {
+                "type": "string"
+              },
+              "release": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "file",
+              "kind",
+              "page",
+              "release"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "proposal"
+                ]
+              },
+              "page": {
+                "type": "string"
+              },
+              "request": {
+                "type": "string"
+              },
+              "release": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "file",
+              "kind",
+              "page",
+              "request",
+              "release"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "snapshot"
+                ]
+              },
+              "page": {
+                "type": "string"
+              },
+              "request": {
+                "type": "string"
+              },
+              "release": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "file",
+              "kind",
+              "page",
+              "request",
+              "release"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "dsDraft"
+                ]
+              },
+              "release": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "id",
+              "file",
+              "kind",
+              "release"
+            ]
+          }
+        ]
+      },
+      "CatalogError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
       }
     },
     "parameters": {}
@@ -37,6 +335,86 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files": {
+      "get": {
+        "operationId": "listFiles",
+        "tags": [
+          "catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "ファイルの一覧です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/recent": {
+      "get": {
+        "operationId": "listRecentFiles",
+        "tags": [
+          "catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "更新日時の新しい順の最近のファイルです。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/documents/{id}": {
+      "get": {
+        "operationId": "getDocument",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "登録簿の文書です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentEntry"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "登録されていない文書 ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogError"
                 }
               }
             }

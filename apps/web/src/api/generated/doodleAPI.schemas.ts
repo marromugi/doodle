@@ -13,3 +13,99 @@ export const HealthStatus = {
 export interface Health {
   status: HealthStatus;
 }
+
+export type DesignSystemItemKind =
+  (typeof DesignSystemItemKind)[keyof typeof DesignSystemItemKind];
+
+export const DesignSystemItemKind = {
+  designSystem: "designSystem",
+} as const;
+
+/**
+ * @nullable
+ */
+export type ReleaseSummary = {
+  id: string;
+  createdAt: string;
+  /** @nullable */
+  message: string | null;
+} | null;
+
+export interface DesignSystemItem {
+  id: string;
+  kind: DesignSystemItemKind;
+  name: string;
+  updatedAt: string;
+  latestRelease: ReleaseSummary | null;
+  usedByApps: number;
+  referenced: boolean;
+}
+
+export type AppItemKind = (typeof AppItemKind)[keyof typeof AppItemKind];
+
+export const AppItemKind = {
+  app: "app",
+} as const;
+
+/**
+ * @nullable
+ */
+export type ReleaseReference = {
+  designSystem: string;
+  release: string;
+} | null;
+
+export interface AppItem {
+  id: string;
+  kind: AppItemKind;
+  name: string;
+  updatedAt: string;
+  reference: ReleaseReference | null;
+  hasNewerRelease: boolean;
+}
+
+export type FileItem = DesignSystemItem | AppItem;
+
+export interface FileList {
+  files: FileItem[];
+}
+
+export type DocumentEntry =
+  | {
+      id: string;
+      file: string;
+      kind: "skeleton";
+      page: string;
+      /** @nullable */
+      release: string | null;
+    }
+  | {
+      id: string;
+      file: string;
+      kind: "proposal";
+      page: string;
+      request: string;
+      /** @nullable */
+      release: string | null;
+    }
+  | {
+      id: string;
+      file: string;
+      kind: "snapshot";
+      page: string;
+      request: string;
+      /** @nullable */
+      release: string | null;
+    }
+  | {
+      id: string;
+      file: string;
+      kind: "dsDraft";
+      /** @nullable */
+      release: null;
+    };
+
+export interface CatalogError {
+  code: string;
+  message: string;
+}

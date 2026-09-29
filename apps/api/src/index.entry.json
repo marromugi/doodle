@@ -1,0 +1,1 @@
+{ "command": "pnpm --filter @doodle/api dev", "needs": [], "burdens": [] }

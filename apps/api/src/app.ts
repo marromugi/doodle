@@ -1,5 +1,7 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
+import { catalogRoutes } from "./catalog";
+
 export const app = new OpenAPIHono<{ Bindings: Env }>().basePath("/api");
 
 const HealthSchema = z.object({ status: z.literal("ok") }).openapi("Health");
@@ -19,6 +21,8 @@ app.openapi(
   }),
   (c) => c.json({ status: "ok" as const }, 200),
 );
+
+app.route("/", catalogRoutes);
 
 export const openAPIConfig = {
   openapi: "3.1.0",

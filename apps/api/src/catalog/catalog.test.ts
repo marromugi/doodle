@@ -1,5 +1,5 @@
 import { env, exports } from "cloudflare:workers";
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, expectTypeOf, test } from "vitest";
 
 import { addFile, registerDocument } from "./index";
 
@@ -96,31 +96,33 @@ describe("recording files", () => {
   const name50 = "あ".repeat(50);
   const name51 = "あ".repeat(51);
 
-  test.each([
-    ["A", true],
-    [name50, true],
-    [name51, false],
-    ["", false],
-    ["   ", false],
-    ["Acme DS", true],
-  ])("name %j is recorded: %s", async (name, recorded) => {
-    await addDesignSystem("Acme DS");
-    const before = (await listFiles()).length;
+  test.each(["A", name50, "Acme DS"])(
+    "name %j is recorded and listed",
+    async (name) => {
+      await addDesignSystem("Acme DS");
 
-    const result = await addFile(db, { kind: "designSystem", name });
+      const result = await addFile(db, { kind: "designSystem", name });
 
-    if (recorded) {
       expect(result.ok).toBe(true);
-      expect(await listFiles()).toHaveLength(before + 1);
-    } else {
+      expect(await listFiles()).toHaveLength(2);
+    },
+  );
+
+  test.each([name51, "", "   "])(
+    "name %j fails with invalid_name and is not recorded",
+    async (name) => {
+      await addDesignSystem("Acme DS");
+
+      const result = await addFile(db, { kind: "designSystem", name });
+
       expect(result).toEqual({
         ok: false,
         code: "invalid_name",
         message: expect.any(String),
       });
-      expect(await listFiles()).toHaveLength(before);
-    }
-  });
+      expect(await listFiles()).toHaveLength(1);
+    },
+  );
 
   test("an app recorded without a reference lists a null reference and no newer release", async () => {
     const app = await addApp(null);
@@ -313,15 +315,23 @@ describe("the document registry", () => {
 
   test("a proposal without a request does not compile", async () => {
     const app = await addApp(null);
-
-    await registerDocument(db, {
+    const proposal = {
       id: "doc_prop_2",
       file: app,
       kind: "proposal",
       page: "p_1",
-      // @ts-expect-error a proposal carries the request it answers
       release: null,
+    } as const;
+
+    expectTypeOf(registerDocument).toBeCallableWith(db, {
+      ...proposal,
+      request: "req_1",
     });
+    expectTypeOf(registerDocument).toBeCallableWith(
+      db,
+      // @ts-expect-error a proposal carries the request it answers
+      proposal,
+    );
   });
 });
 
