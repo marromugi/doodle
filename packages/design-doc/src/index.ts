@@ -1,5 +1,6 @@
 export * from "./apply/apply";
 export * from "./apply/failure";
+export * from "./diff/diff";
 export * from "./model/discrepancy";
 export * from "./model/document";
 export * from "./model/node";
@@ -12,6 +13,7 @@ export * from "./model/tokens";
 export * from "./model/value";
 export * from "./ports";
 export * from "./rebase/failure";
+export * from "./rebase/rebase";
 export * from "./resolve/failure";
 export * from "./resolve/resolve";
 export * from "./roles";
