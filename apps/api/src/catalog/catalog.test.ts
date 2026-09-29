@@ -135,6 +135,9 @@ describe("recording files", () => {
       updatedAt: expect.any(String),
       reference: null,
       hasNewerRelease: false,
+      inProgressRequests: 0,
+      pageCount: 0,
+      thumbnailDocument: null,
     });
   });
 
