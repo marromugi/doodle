@@ -96,14 +96,22 @@ type DocumentSummaryRow = {
   revision: number;
 };
 
+type PageRow = {
+  file_id: string;
+  skeleton_document_id: string;
+  adopted_proposal_document_id: string | null;
+};
+
+type InProgressRow = { file_id: string; count: number };
+
 function isNewer(a: ReleaseRow, b: ReleaseRow): boolean {
   const diff = Date.parse(a.created_at) - Date.parse(b.created_at);
   return diff !== 0 ? diff > 0 : a.id > b.id;
 }
 
 export async function listFiles(db: D1Database): Promise<FileItem[]> {
-  const [files, releases, summaries] = await db.batch<
-    FileRow | ReleaseRow | DocumentSummaryRow
+  const [files, releases, summaries, pages, inProgress] = await db.batch<
+    FileRow | ReleaseRow | DocumentSummaryRow | PageRow | InProgressRow
   >([
     db
       .prepare(
@@ -117,10 +125,31 @@ export async function listFiles(db: D1Database): Promise<FileItem[]> {
       `SELECT d.file_id, d.kind, s.updated_at, s.revision
        FROM documents d JOIN document_summaries s ON s.document_id = d.id`,
     ),
+    db.prepare(
+      `SELECT file_id, skeleton_document_id, adopted_proposal_document_id
+       FROM pages ORDER BY created_at, rowid`,
+    ),
+    db.prepare(
+      `SELECT p.file_id, COUNT(*) AS count
+       FROM requests r JOIN pages p ON p.id = r.page_id
+       WHERE r.state = 'inProgress' GROUP BY p.file_id`,
+    ),
   ]);
   const fileRows = files!.results as FileRow[];
   const releaseRows = releases!.results as ReleaseRow[];
   const summaryRows = summaries!.results as DocumentSummaryRow[];
+  const pageRows = pages!.results as PageRow[];
+  const inProgressRows = inProgress!.results as InProgressRow[];
+
+  const pageCounts = new Map<string, number>();
+  const firstPages = new Map<string, PageRow>();
+  for (const page of pageRows) {
+    pageCounts.set(page.file_id, (pageCounts.get(page.file_id) ?? 0) + 1);
+    if (!firstPages.has(page.file_id)) firstPages.set(page.file_id, page);
+  }
+  const inProgressCounts = new Map(
+    inProgressRows.map((row) => [row.file_id, row.count]),
+  );
 
   const summaryUpdatedAt = new Map<string, string>();
   const draftRevisions = new Map<string, number>();
@@ -186,6 +215,7 @@ export async function listFiles(db: D1Database): Promise<FileItem[]> {
       row.reference_design_system_id === null
         ? undefined
         : latestByDesignSystem.get(row.reference_design_system_id);
+    const firstPage = firstPages.get(row.id);
     return {
       id: row.id,
       kind: "app",
@@ -204,6 +234,13 @@ export async function listFiles(db: D1Database): Promise<FileItem[]> {
         latest !== undefined &&
         Date.parse(latest.created_at) >
           Date.parse(referencedRelease.created_at),
+      inProgressRequests: inProgressCounts.get(row.id) ?? 0,
+      pageCount: pageCounts.get(row.id) ?? 0,
+      thumbnailDocument:
+        firstPage === undefined
+          ? null
+          : (firstPage.adopted_proposal_document_id ??
+            firstPage.skeleton_document_id),
     };
   });
 }

@@ -141,6 +141,18 @@
           },
           "hasNewerRelease": {
             "type": "boolean"
+          },
+          "inProgressRequests": {
+            "type": "integer"
+          },
+          "pageCount": {
+            "type": "integer"
+          },
+          "thumbnailDocument": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -149,7 +161,10 @@
           "name",
           "updatedAt",
           "reference",
-          "hasNewerRelease"
+          "hasNewerRelease",
+          "inProgressRequests",
+          "pageCount",
+          "thumbnailDocument"
         ]
       },
       "ReleaseReference": {
@@ -439,6 +454,165 @@
             ]
           }
         ]
+      },
+      "RequestList": {
+        "type": "object",
+        "properties": {
+          "requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Request"
+            }
+          }
+        },
+        "required": [
+          "requests"
+        ]
+      },
+      "Request": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "page": {
+            "type": "string"
+          },
+          "snapshot": {
+            "type": "string"
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "feedback": {
+            "type": "string"
+          },
+          "previous": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/RequestState"
+          },
+          "agent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "delivered": {
+            "type": "boolean"
+          },
+          "adoptedProposal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "page",
+          "snapshot",
+          "references",
+          "feedback",
+          "previous",
+          "state",
+          "agent",
+          "delivered",
+          "adoptedProposal"
+        ]
+      },
+      "RequestState": {
+        "type": "string",
+        "enum": [
+          "requested",
+          "inProgress",
+          "awaitingChoice",
+          "completed",
+          "aborted"
+        ]
+      },
+      "TransitionError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/RequestState"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "AbortedRequests": {
+        "type": "object",
+        "properties": {
+          "aborted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "aborted"
+        ]
+      },
+      "Page": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "skeleton": {
+            "type": "string"
+          },
+          "adoptedProposal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "file",
+          "name",
+          "skeleton",
+          "adoptedProposal"
+        ]
+      },
+      "PageList": {
+        "type": "object",
+        "properties": {
+          "pages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Page"
+            }
+          }
+        },
+        "required": [
+          "pages"
+        ]
       }
     },
     "parameters": {}
@@ -716,6 +890,487 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Thumbnail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/requests": {
+      "get": {
+        "operationId": "listRequests",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/RequestState"
+            },
+            "required": false,
+            "name": "state",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "依頼の一覧です。state で絞れます。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/requests/{id}": {
+      "get": {
+        "operationId": "getRequest",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "依頼です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "存在しない依頼 ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/requests/{id}/take": {
+      "post": {
+        "operationId": "takeRequest",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "agent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "agent"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "移したあとの依頼です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "存在しない依頼 ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "今の状態からは移れません。理由はコードで返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/requests/{id}/delivered": {
+      "post": {
+        "operationId": "markRequestDelivered",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "移したあとの依頼です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "存在しない依頼 ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "今の状態からは移れません。理由はコードで返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/requests/{id}/complete": {
+      "post": {
+        "operationId": "completeRequest",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "agent": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "agent"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "移したあとの依頼です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "存在しない依頼 ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "今の状態からは移れません。理由はコードで返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/requests/{id}/retry": {
+      "post": {
+        "operationId": "retryRequest",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "移したあとの依頼です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "存在しない依頼 ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "今の状態からは移れません。理由はコードで返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/requests/{id}/adopt": {
+      "post": {
+        "operationId": "adoptProposal",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "proposal": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "proposal"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "移したあとの依頼です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "存在しない依頼 ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "今の状態からは移れません。理由はコードで返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransitionError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agents/{agentId}/abort-requests": {
+      "post": {
+        "operationId": "abortAgentRequests",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "agentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "中断にした依頼の ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbortedRequests"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pages/{id}": {
+      "get": {
+        "operationId": "getPage",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ページです。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "存在しないページ ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{fileId}/pages": {
+      "get": {
+        "operationId": "listPages",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "アプリのページの一覧です。記録した順に並びます。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "存在しないファイル ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogError"
                 }
               }
             }

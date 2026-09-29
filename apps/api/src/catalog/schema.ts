@@ -46,6 +46,9 @@ const AppItemSchema = z
     updatedAt: z.string(),
     reference: ReleaseReferenceSchema.nullable(),
     hasNewerRelease: z.boolean(),
+    inProgressRequests: z.number().int(),
+    pageCount: z.number().int(),
+    thumbnailDocument: z.string().nullable(),
   })
   .openapi("AppItem");
 
@@ -140,4 +143,74 @@ export type Failure<Code extends string> = {
   ok: false;
   code: Code;
   message: string;
+};
+
+export const RequestStateSchema = z
+  .enum(["requested", "inProgress", "awaitingChoice", "completed", "aborted"])
+  .openapi("RequestState");
+
+export type RequestState = z.infer<typeof RequestStateSchema>;
+
+export const RequestSchema = z
+  .object({
+    id: z.string(),
+    page: z.string(),
+    snapshot: z.string(),
+    references: z.array(z.string()),
+    feedback: z.string(),
+    previous: z.string().nullable(),
+    state: RequestStateSchema,
+    agent: z.string().nullable(),
+    delivered: z.boolean(),
+    adoptedProposal: z.string().nullable(),
+  })
+  .openapi("Request");
+
+export type CatalogRequest = z.infer<typeof RequestSchema>;
+
+export const RequestListSchema = z
+  .object({ requests: z.array(RequestSchema) })
+  .openapi("RequestList");
+
+export const PageSchema = z
+  .object({
+    id: z.string(),
+    file: z.string(),
+    name: z.string(),
+    skeleton: z.string(),
+    adoptedProposal: z.string().nullable(),
+  })
+  .openapi("Page");
+
+export type CatalogPage = z.infer<typeof PageSchema>;
+
+export const PageListSchema = z
+  .object({ pages: z.array(PageSchema) })
+  .openapi("PageList");
+
+export const TransitionErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+    state: RequestStateSchema.optional(),
+  })
+  .openapi("TransitionError");
+
+export const AbortedRequestsSchema = z
+  .object({ aborted: z.array(z.string()) })
+  .openapi("AbortedRequests");
+
+export type AddRequestInput = {
+  page: string;
+  snapshot: string;
+  references: string[];
+  feedback: string;
+  previous: string | null;
+};
+
+export type AddPageInput = {
+  id: string;
+  file: string;
+  skeleton: string;
+  name: string;
 };
