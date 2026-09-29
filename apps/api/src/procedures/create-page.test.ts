@@ -106,8 +106,8 @@ describe("createPage", () => {
     const first = await createPage(ports, { appFileId, name: "ホーム" });
     const second = await createPage(ports, { appFileId, name: "ホーム" });
 
-    expect(first.ok && second.ok).toBe(true);
-    if (first.ok && second.ok) expect(first.pageId).not.toBe(second.pageId);
+    if (!first.ok || !second.ok) throw new Error("the pages were not created");
+    expect(first.pageId).not.toBe(second.pageId);
   });
 
   test("pages made as B then A are listed by the catalog API as B then A", async () => {

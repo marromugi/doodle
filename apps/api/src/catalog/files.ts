@@ -72,6 +72,37 @@ export async function addFile(
   return { ok: true, file };
 }
 
+export async function removeFile(db: D1Database, id: string): Promise<void> {
+  await db.prepare("DELETE FROM files WHERE id = ?").bind(id).run();
+}
+
+/** What the app references now. Null for an app with no design system, and for an unknown file. */
+export async function getFileReference(
+  db: D1Database,
+  id: string,
+): Promise<ReleaseReference | null> {
+  const row = await db
+    .prepare(
+      "SELECT reference_design_system_id, reference_release_id FROM files WHERE id = ?",
+    )
+    .bind(id)
+    .first<{
+      reference_design_system_id: string | null;
+      reference_release_id: string | null;
+    }>();
+  if (
+    row === null ||
+    row.reference_design_system_id === null ||
+    row.reference_release_id === null
+  ) {
+    return null;
+  }
+  return {
+    designSystem: row.reference_design_system_id,
+    release: row.reference_release_id,
+  };
+}
+
 type FileRow = {
   id: string;
   kind: "designSystem" | "app";

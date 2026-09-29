@@ -235,6 +235,94 @@ export interface PageList {
   pages: Page[];
 }
 
+export interface CreatedFile {
+  fileId: string;
+  draftDocumentId?: string;
+}
+
+export type CreateNameErrorCode =
+  (typeof CreateNameErrorCode)[keyof typeof CreateNameErrorCode];
+
+export const CreateNameErrorCode = {
+  invalid_name: "invalid_name",
+} as const;
+
+export interface CreateNameError {
+  code: CreateNameErrorCode;
+  message: string;
+}
+
+export type CreationErrorCode =
+  (typeof CreationErrorCode)[keyof typeof CreationErrorCode];
+
+export const CreationErrorCode = {
+  registration_failed: "registration_failed",
+  initialization_failed: "initialization_failed",
+} as const;
+
+export interface CreationError {
+  code: CreationErrorCode;
+  message: string;
+}
+
+export type CreateFileBody =
+  | {
+      kind: "designSystem";
+      /**
+       * The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points.
+       * @minLength 1
+       * @maxLength 50
+       */
+      name: string;
+    }
+  | {
+      kind: "app";
+      /**
+       * The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points.
+       * @minLength 1
+       * @maxLength 50
+       */
+      name: string;
+      reference: ReleaseReference | null;
+    };
+
+export interface CreatedPage {
+  pageId: string;
+  skeletonDocumentId: string;
+}
+
+export interface CreatePageBody {
+  /**
+   * The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points.
+   * @minLength 1
+   * @maxLength 50
+   */
+  name: string;
+}
+
+export interface CreatedCandidate {
+  candidateDocumentId: string;
+}
+
+export type CandidateRefusalCode =
+  (typeof CandidateRefusalCode)[keyof typeof CandidateRefusalCode];
+
+export const CandidateRefusalCode = {
+  request_aborted: "request_aborted",
+  taken_by_another_agent: "taken_by_another_agent",
+  request_finished: "request_finished",
+  request_not_taken: "request_not_taken",
+} as const;
+
+export interface CandidateRefusal {
+  code: CandidateRefusalCode;
+  message: string;
+}
+
+export interface CreateCandidateBody {
+  agentId: string;
+}
+
 export type PutDocumentSummaryBody = {
   revision: number;
   updatedAt: string;

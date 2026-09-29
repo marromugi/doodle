@@ -86,8 +86,8 @@ describe("createFile", () => {
       reference: null,
     });
 
-    expect(first.ok && second.ok).toBe(true);
-    if (first.ok && second.ok) expect(first.fileId).not.toBe(second.fileId);
+    if (!first.ok || !second.ok) throw new Error("the apps were not created");
+    expect(first.fileId).not.toBe(second.fileId);
     expect(names(catalog)).toEqual(["Shop", "Shop"]);
   });
 
@@ -121,7 +121,9 @@ describe("createFile", () => {
     );
 
     if (!result.ok) throw new Error(result.message);
-    expect(catalog.files).toMatchObject([{ id: result.fileId, name: "Tokens" }]);
+    expect(catalog.files).toMatchObject([
+      { id: result.fileId, name: "Tokens" },
+    ]);
     expect(catalog.documents).toEqual([
       {
         id: result.draftDocumentId,

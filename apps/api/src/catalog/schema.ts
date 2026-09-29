@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
-const ReleaseReferenceSchema = z
+export const ReleaseReferenceSchema = z
   .object({ designSystem: z.string(), release: z.string() })
   .openapi("ReleaseReference");
 

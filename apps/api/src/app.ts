@@ -1,6 +1,7 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import { catalogRoutes } from "./catalog";
+import { fileProcedureRoutes } from "./procedures/routes";
 import { sessionRoutes } from "./session/routes";
 
 export const app = new OpenAPIHono<{ Bindings: Env }>().basePath("/api");
@@ -24,6 +25,7 @@ app.openapi(
 );
 
 app.route("/", catalogRoutes);
+app.route("/", fileProcedureRoutes);
 app.route("/", sessionRoutes);
 
 export const openAPIConfig = {
