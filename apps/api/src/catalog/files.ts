@@ -167,7 +167,8 @@ export async function listFiles(db: D1Database): Promise<FileItem[]> {
       hasNewerRelease:
         referencedRelease !== undefined &&
         latest !== undefined &&
-        isNewer(latest, referencedRelease),
+        Date.parse(latest.created_at) >
+          Date.parse(referencedRelease.created_at),
     };
   });
 }
