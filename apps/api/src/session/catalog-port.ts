@@ -1,6 +1,6 @@
 import type { Scope } from "@doodle/design-doc";
 
-import type { RequestState } from "../catalog/schema";
+import type { DocumentEntry, RequestState } from "../catalog/schema";
 
 /** A catalog read: a value, nothing there, or a read that did not work. */
 export type Read<T> =
@@ -12,7 +12,7 @@ export type Read<T> =
 export type ScopeRead = Read<Scope> | { status: "not_a_scope" };
 
 export type Registration = {
-  kind: "skeleton" | "proposal" | "snapshot" | "dsDraft";
+  kind: DocumentEntry["kind"];
   /** The request a proposal or snapshot belongs to. */
   request: string | null;
 };

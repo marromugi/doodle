@@ -102,7 +102,7 @@ export async function getDocument(
 export type IsDocumentFileDeletedResult =
   { ok: true; deleted: boolean } | Failure<"document_not_found">;
 
-// Nothing records a deleted file yet, so a registered document is never deleted.
+// A registered document's file is not deleted (#1, 「文書セッションが使う目録の口の実物」).
 export async function isDocumentFileDeleted(
   db: D1Database,
   id: string,

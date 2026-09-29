@@ -4,6 +4,7 @@ import { getDocument, isDocumentFileDeleted } from "../catalog/documents";
 import { getReleaseContent } from "../catalog/releases";
 import { getRequest } from "../catalog/requests";
 import type { CatalogPort, Read } from "./catalog-port";
+import { parseJsonWith } from "./parse";
 
 const found = <T>(value: T): Read<T> => ({ status: "found", value });
 const absent = { status: "absent" } as const;
@@ -20,15 +21,6 @@ const guarded =
       return unreadable;
     }
   };
-
-const parseScope = (text: string): Scope | null => {
-  try {
-    const parsed = Scope.safeParse(JSON.parse(text));
-    return parsed.success ? parsed.data : null;
-  } catch {
-    return null;
-  }
-};
 
 /** The catalog port backed by D1, through the catalog module. */
 export const catalogFromEnv = (env: { DB: D1Database }): CatalogPort => ({
@@ -54,7 +46,7 @@ export const catalogFromEnv = (env: { DB: D1Database }): CatalogPort => ({
   releaseContents: guarded(async (releaseId) => {
     const result = await getReleaseContent(env.DB, releaseId);
     if (!result.ok) return absent;
-    const scope = parseScope(result.content);
+    const scope = parseJsonWith(Scope, result.content);
     return scope === null ? ({ status: "not_a_scope" } as const) : found(scope);
   }),
 });

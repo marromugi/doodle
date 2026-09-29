@@ -15,8 +15,9 @@ import {
 import { DurableObject } from "cloudflare:workers";
 
 import { catalogFromEnv } from "./catalog-d1";
-import type { CatalogPort } from "./catalog-port";
+import type { CatalogPort, Read, Registration } from "./catalog-port";
 import { DOCUMENT_ID_HEADER } from "./connection";
+import { parseJsonWith } from "./parse";
 
 const CONTENT = "content";
 const DELETED = "deleted";
@@ -26,7 +27,12 @@ const CLOSE_POLICY = 1008;
 const CLOSE_UNSUPPORTED = 1003;
 const CLOSE_ERROR = 1011;
 
-type Attachment = { documentId: string; identity: Identity };
+/** `admitted` is set once the connection check passed; only admitted sockets get broadcasts. */
+type Attachment = {
+  documentId: string;
+  identity: Identity;
+  admitted: boolean;
+};
 
 type Outcome<T> =
   { ok: true; value: T } | { ok: false; failure: SessionFailure };
@@ -74,6 +80,7 @@ export class DocumentSession extends DurableObject<Env> {
 
   #queue: Promise<unknown> = Promise.resolve();
   #scopes = new Map<string, Scope>();
+  #registrations = new Map<string, Registration>();
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -89,14 +96,15 @@ export class DocumentSession extends DurableObject<Env> {
 
   async initialize(content: Document): Promise<InitializeResult> {
     return this.#enqueue(async () => {
-      if (await this.ctx.storage.get<boolean>(DELETED)) {
+      const stored = await this.ctx.storage.get([DELETED, CONTENT]);
+      if (stored.get(DELETED)) {
         return {
           ok: false,
           code: "document_deleted",
           message: deleted.message,
         };
       }
-      if ((await this.ctx.storage.get(CONTENT)) !== undefined) {
+      if (stored.get(CONTENT) !== undefined) {
         return {
           ok: false,
           code: "already_initialized",
@@ -127,7 +135,7 @@ export class DocumentSession extends DurableObject<Env> {
 
     const { 0: client, 1: server } = new WebSocketPair();
     this.ctx.acceptWebSocket(server);
-    const attachment: Attachment = { documentId, identity };
+    const attachment: Attachment = { documentId, identity, admitted: false };
     server.serializeAttachment(attachment);
 
     try {
@@ -135,6 +143,8 @@ export class DocumentSession extends DurableObject<Env> {
       if (refusal) {
         send(server, { type: "failure", failure: refusal });
         server.close(CLOSE_POLICY, refusal.code);
+      } else {
+        server.serializeAttachment({ ...attachment, admitted: true });
       }
     } catch (error) {
       console.error(error);
@@ -147,7 +157,8 @@ export class DocumentSession extends DurableObject<Env> {
     socket: WebSocket,
     data: string | ArrayBuffer,
   ): Promise<void> {
-    const parsed = typeof data === "string" ? parseMessage(data) : null;
+    const parsed =
+      typeof data === "string" ? parseJsonWith(ClientMessage, data) : null;
     if (parsed === null) {
       socket.close(CLOSE_UNSUPPORTED, "invalid message");
       return;
@@ -188,10 +199,9 @@ export class DocumentSession extends DurableObject<Env> {
   }
 
   async #read(): Promise<Outcome<Document>> {
-    if (await this.ctx.storage.get<boolean>(DELETED)) {
-      return { ok: false, failure: deleted };
-    }
-    const content = await this.ctx.storage.get<Document>(CONTENT);
+    const stored = await this.ctx.storage.get([DELETED, CONTENT]);
+    if (stored.get(DELETED)) return { ok: false, failure: deleted };
+    const content = stored.get(CONTENT) as Document | undefined;
     return content === undefined
       ? {
           ok: false,
@@ -250,7 +260,10 @@ export class DocumentSession extends DurableObject<Env> {
       revision: result.value.revision,
     };
     const text = JSON.stringify(applied);
-    for (const each of this.ctx.getWebSockets()) sendText(each, text);
+    for (const each of this.ctx.getWebSockets()) {
+      const attachment = each.deserializeAttachment() as Attachment | null;
+      if (attachment?.admitted) sendText(each, text);
+    }
   }
 
   async #save(document: Document): Promise<void> {
@@ -264,8 +277,14 @@ export class DocumentSession extends DurableObject<Env> {
     documentId: string,
     agentId: string,
   ): Promise<SessionFailure | null> {
-    const registration = await this.catalog.registration(documentId);
+    const cached = this.#registrations.get(documentId);
+    const registration: Read<Registration> = cached
+      ? { status: "found", value: cached }
+      : await this.catalog.registration(documentId);
     if (registration.status === "unreadable") return unavailable;
+    if (registration.status === "found") {
+      this.#registrations.set(documentId, registration.value);
+    }
     if (registration.status === "absent") {
       return plain(
         "document_not_registered",
@@ -340,12 +359,3 @@ export class DocumentSession extends DurableObject<Env> {
     }
   }
 }
-
-const parseMessage = (text: string): ClientMessage | null => {
-  try {
-    const parsed = ClientMessage.safeParse(JSON.parse(text));
-    return parsed.success ? parsed.data : null;
-  } catch {
-    return null;
-  }
-};
