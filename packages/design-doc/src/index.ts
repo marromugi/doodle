@@ -13,6 +13,7 @@ export * from "./model/value";
 export * from "./ports";
 export * from "./rebase/failure";
 export * from "./resolve/failure";
+export * from "./resolve/resolve";
 export * from "./roles";
 export * from "./validate/failure";
 export * from "./validate/validate";
