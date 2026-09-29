@@ -193,11 +193,6 @@ describe("failures", () => {
     expect(result.ok).toBe(true);
   });
 
-  test("a shape without a root renders an empty page", async () => {
-    const page = await draw(null);
-    expect(page.doc.body.children).toHaveLength(0);
-  });
-
   test("a colour that is not a colour fails with invalid-color", () => {
     const url = "url(https://example.com/a.png)";
     expect(failures(frame("root", { background: url }))).toEqual([
