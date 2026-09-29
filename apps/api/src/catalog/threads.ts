@@ -122,29 +122,30 @@ export async function listThreads(
   filter: ThreadFilter,
 ): Promise<Thread[]> {
   const bindings = [filter.document ?? null, filter.awaitingReply ? 1 : 0];
-  const threads = await db
-    .prepare(
-      `SELECT t.id, t.document_id, t.node_id FROM threads t
+  // One batch, so both reads see the same state.
+  const [threads, comments] = await db.batch<ThreadRow | CommentRow>([
+    db
+      .prepare(
+        `SELECT t.id, t.document_id, t.node_id FROM threads t
        WHERE ${MATCHES} ORDER BY t.created_at, t.rowid`,
-    )
-    .bind(...bindings)
-    .all<ThreadRow>();
-  const comments = await db
-    .prepare(
-      `SELECT c.id, c.thread_id, c.author_kind, c.body, c.created_at
+      )
+      .bind(...bindings),
+    db
+      .prepare(
+        `SELECT c.id, c.thread_id, c.author_kind, c.body, c.created_at
        FROM comments c JOIN threads t ON t.id = c.thread_id
        WHERE ${MATCHES} ORDER BY c.position`,
-    )
-    .bind(...bindings)
-    .all<CommentRow>();
+      )
+      .bind(...bindings),
+  ]);
 
   const byThread = new Map<string, Comment[]>();
-  for (const row of comments.results) {
+  for (const row of comments!.results as CommentRow[]) {
     const list = byThread.get(row.thread_id) ?? [];
     list.push(toComment(row));
     byThread.set(row.thread_id, list);
   }
-  return threads.results.map((row) =>
+  return (threads!.results as ThreadRow[]).map((row) =>
     toThread(row, byThread.get(row.id) ?? []),
   );
 }
