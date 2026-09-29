@@ -15,6 +15,7 @@ import {
   read,
   report,
   reportAt,
+  settleProp,
   UNSPECIFIED,
   type Env,
   type Resolved,
@@ -69,7 +70,7 @@ const frame = (node: Of<"frame">, env: Env): RenderNode => {
   const radius = number(node.radius, "radius");
   return {
     type: "frame",
-    source: node.id,
+    source: env.source ?? node.id,
     width: node.width ?? UNWRITTEN.size,
     height: node.height ?? UNWRITTEN.size,
     ...placed(node),
@@ -105,7 +106,7 @@ const text = (node: Of<"text">, env: Env): RenderNode => {
   );
   return {
     type: "text",
-    source: node.id,
+    source: env.source ?? node.id,
     width: node.width ?? UNWRITTEN.size,
     height: node.height ?? UNWRITTEN.size,
     ...placed(node),
@@ -130,7 +131,7 @@ const image = (node: Of<"image">, env: Env): RenderNode => {
   const radius = written(asNumber(read(node.radius, env, at), env, at));
   return {
     type: "image",
-    source: node.id,
+    source: env.source ?? node.id,
     width: node.width ?? UNWRITTEN.size,
     height: node.height ?? UNWRITTEN.size,
     ...placed(node),
@@ -198,7 +199,7 @@ const positionInstance = (
   env: Env,
 ): RenderNode[] => {
   if (drawn.length === 1) {
-    const one: RenderNode = { ...drawn[0]!, source: node.id };
+    const one: RenderNode = { ...drawn[0]! };
     delete one.position;
     return [{ ...one, ...placed(node) }];
   }
@@ -251,6 +252,9 @@ const instance = (node: Of<"instance">, env: Env): RenderNode[] => {
     passed: new Set(),
     vars: new Map(),
     owner: node.component,
+    source: env.source ?? node.id,
+    lazy: new Map(),
+    failedProps: new Set(),
     chain: [...env.chain, node.component],
     instances: [...env.instances, node.id],
     out: env.out,
@@ -261,18 +265,29 @@ const instance = (node: Of<"instance">, env: Env): RenderNode[] => {
       inner.passed.add(name);
     }
   }
+  const start = env.out.length;
   for (const [name, def] of Object.entries(component.props)) {
     if (inner.passed.has(name)) continue;
     if (def.default !== undefined) {
-      const at = { nodeId: component.root.id, key: `props.${name}` };
-      const value = evaluate(def.default, inner, at);
-      inner.props.set(name, value === FAILED ? UNSPECIFIED : value);
+      const value = def.default;
+      inner.lazy.set(name, () => {
+        const at = { nodeId: component.root.id, key: `props.${name}` };
+        const result = evaluate(value, inner, at);
+        if (result === FAILED) {
+          inner.failedProps.add(name);
+          inner.props.set(name, UNSPECIFIED);
+        } else {
+          inner.props.set(name, result);
+        }
+        return result;
+      });
     } else if (def.required !== true) {
       inner.props.set(name, UNSPECIFIED);
     }
   }
+  for (const name of [...inner.lazy.keys()]) settleProp(name, inner);
+  if (inner.failedProps.size > 0) return [];
 
-  const start = env.out.length;
   return positionInstance(node, render(component.root, inner), start, env);
 };
 
@@ -303,6 +318,9 @@ export const resolve: Resolve = (tree, scope) => {
     passed: new Set(),
     vars: new Map(),
     owner: null,
+    source: null,
+    lazy: new Map(),
+    failedProps: new Set(),
     chain: [],
     instances: [],
     out: [],

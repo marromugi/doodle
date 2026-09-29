@@ -33,6 +33,11 @@ export type Env = {
   passed: Set<string>;
   vars: Map<string, Resolved>;
   owner: string | null;
+  /** The outermost page-written instance being expanded, if any. */
+  source: string | null;
+  /** Defaults not read yet; a default is read the first time it is needed. */
+  lazy: Map<string, () => Evaluated>;
+  failedProps: Set<string>;
   chain: string[];
   instances: string[];
   out: ResolveFailure[];
@@ -123,8 +128,20 @@ const evaluateVar = (ref: string, env: Env, at: At): Evaluated => {
   return current;
 };
 
+/** Reads a default the first time it is needed. A default in a loop stays unread and is unresolved. */
+export const settleProp = (name: string, env: Env): Evaluated => {
+  if (env.props.has(name)) return env.props.get(name)!;
+  if (env.failedProps.has(name)) return FAILED;
+  const settle = env.lazy.get(name);
+  if (settle === undefined) return FAILED;
+  env.lazy.delete(name);
+  return settle();
+};
+
 const evaluateProp = (name: string, env: Env, at: At): Evaluated =>
-  env.props.has(name) ? env.props.get(name)! : unresolved(env, at, name);
+  env.props.has(name) || env.failedProps.has(name) || env.lazy.has(name)
+    ? settleProp(name, env)
+    : unresolved(env, at, name);
 
 const evaluateMatch = (
   value: Extract<Value, { match: string }>,
