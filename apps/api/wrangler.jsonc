@@ -5,6 +5,13 @@
   "compatibility_date": "2026-09-29",
   "compatibility_flags": ["nodejs_compat"],
   "browser": { "binding": "BROWSER" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "doodle",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+    },
+  ],
   "observability": {
     "enabled": true,
   },

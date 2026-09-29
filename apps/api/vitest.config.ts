@@ -1,8 +1,20 @@
-import { cloudflareTest } from "@cloudflare/vitest-plugin";
+import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-plugin";
 import { defineConfig } from "vitest/config";
 
-export default defineConfig({
-  plugins: [cloudflareTest({ wrangler: { configPath: "./wrangler.jsonc" } })],
-  // The first browser launch on a machine downloads Chrome.
-  test: { name: "api", testTimeout: 120_000 },
+export default defineConfig(async () => {
+  const migrations = await readD1Migrations("./migrations");
+  return {
+    plugins: [
+      cloudflareTest({
+        wrangler: { configPath: "./wrangler.jsonc" },
+        miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
+      }),
+    ],
+    test: {
+      name: "api",
+      // The first browser launch on a machine downloads Chrome.
+      testTimeout: 120_000,
+      setupFiles: ["./src/test-setup.ts"],
+    },
+  };
 });
