@@ -600,6 +600,118 @@
           "adoptedProposal"
         ]
       },
+      "Thread": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "document": {
+            "type": "string"
+          },
+          "node": {
+            "type": "string"
+          },
+          "awaitingReply": {
+            "type": "boolean"
+          },
+          "comments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Comment"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "document",
+          "node",
+          "awaitingReply",
+          "comments"
+        ]
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "authorKind": {
+            "$ref": "#/components/schemas/AuthorKind"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "authorKind",
+          "body",
+          "createdAt"
+        ]
+      },
+      "AuthorKind": {
+        "type": "string",
+        "enum": [
+          "human",
+          "agent"
+        ]
+      },
+      "AddThread": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "type": "string"
+          },
+          "node": {
+            "type": "string"
+          },
+          "authorKind": {
+            "$ref": "#/components/schemas/AuthorKind"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "document",
+          "node",
+          "authorKind",
+          "body"
+        ]
+      },
+      "AddComment": {
+        "type": "object",
+        "properties": {
+          "authorKind": {
+            "$ref": "#/components/schemas/AuthorKind"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorKind",
+          "body"
+        ]
+      },
+      "ThreadList": {
+        "type": "object",
+        "properties": {
+          "threads": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Thread"
+            }
+          }
+        },
+        "required": [
+          "threads"
+        ]
+      },
       "PageList": {
         "type": "object",
         "properties": {
@@ -1327,6 +1439,123 @@
           },
           "404": {
             "description": "存在しないページ ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/threads": {
+      "post": {
+        "operationId": "addThread",
+        "tags": [
+          "catalog"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddThread"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作ったスレッドです。最初のコメントを持ちます。ノードがあるかは確かめません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listThreads",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "document",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true"
+              ]
+            },
+            "required": false,
+            "name": "awaitingReply",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "スレッドの一覧です。document で文書を絞り、awaitingReply=true で返信待ちだけに絞ります。どちらかは必須です。コメントは書いた順に並びます。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreadList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/threads/{id}/comments": {
+      "post": {
+        "operationId": "addComment",
+        "tags": [
+          "catalog"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddComment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "スレッドに足したコメントです。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "存在しないスレッド ID です。",
             "content": {
               "application/json": {
                 "schema": {

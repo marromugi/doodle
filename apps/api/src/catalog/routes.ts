@@ -7,7 +7,10 @@ import { getPage, listPages } from "./pages";
 import { getRequest, listRequests } from "./requests";
 import {
   AbortedRequestsSchema,
+  AddCommentSchema,
+  AddThreadSchema,
   CatalogErrorSchema,
+  CommentSchema,
   DocumentEntrySchema,
   FileListSchema,
   PageListSchema,
@@ -15,11 +18,14 @@ import {
   RequestListSchema,
   RequestSchema,
   RequestStateSchema,
+  ThreadListSchema,
+  ThreadSchema,
   ThumbnailPutSchema,
   ThumbnailSchema,
   TransitionErrorSchema,
 } from "./schema";
 import { getSummary, putSummary } from "./summaries";
+import { addComment, addThread, listThreads } from "./threads";
 import { getThumbnail, putThumbnail } from "./thumbnails";
 import {
   abortAgentRequests,
@@ -445,6 +451,100 @@ catalogRoutes.openapi(
       );
     }
     return c.json(page, 200);
+  },
+);
+
+catalogRoutes.openapi(
+  createRoute({
+    method: "post",
+    path: "/threads",
+    operationId: "addThread",
+    tags: ["catalog"],
+    request: {
+      body: { content: { "application/json": { schema: AddThreadSchema } } },
+    },
+    responses: {
+      201: {
+        description:
+          "作ったスレッドです。最初のコメントを持ちます。ノードがあるかは確かめません。",
+        content: { "application/json": { schema: ThreadSchema } },
+      },
+    },
+  }),
+  async (c) => c.json(await addThread(c.env.DB, c.req.valid("json")), 201),
+);
+
+catalogRoutes.openapi(
+  createRoute({
+    method: "post",
+    path: "/threads/{id}/comments",
+    operationId: "addComment",
+    tags: ["catalog"],
+    request: {
+      params: z.object({ id: z.string() }),
+      body: { content: { "application/json": { schema: AddCommentSchema } } },
+    },
+    responses: {
+      201: {
+        description: "スレッドに足したコメントです。",
+        content: { "application/json": { schema: CommentSchema } },
+      },
+      404: {
+        description: "存在しないスレッド ID です。",
+        content: { "application/json": { schema: CatalogErrorSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const result = await addComment(
+      c.env.DB,
+      c.req.valid("param").id,
+      c.req.valid("json"),
+    );
+    if (!result.ok) {
+      return c.json({ code: result.code, message: result.message }, 404);
+    }
+    return c.json(result.comment, 201);
+  },
+);
+
+const ThreadQuerySchema = z
+  .object({
+    document: z.string().optional(),
+    awaitingReply: z.literal("true").optional(),
+  })
+  .refine(
+    (query) =>
+      query.document !== undefined || query.awaitingReply !== undefined,
+    { message: "document か awaitingReply のどちらかが必要です。" },
+  );
+
+catalogRoutes.openapi(
+  createRoute({
+    method: "get",
+    path: "/threads",
+    operationId: "listThreads",
+    tags: ["catalog"],
+    request: { query: ThreadQuerySchema },
+    responses: {
+      200: {
+        description:
+          "スレッドの一覧です。document で文書を絞り、awaitingReply=true で返信待ちだけに絞ります。どちらかは必須です。コメントは書いた順に並びます。",
+        content: { "application/json": { schema: ThreadListSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const query = c.req.valid("query");
+    return c.json(
+      {
+        threads: await listThreads(c.env.DB, {
+          document: query.document,
+          awaitingReply: query.awaitingReply === "true" ? true : undefined,
+        }),
+      },
+      200,
+    );
   },
 );
 

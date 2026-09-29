@@ -214,3 +214,55 @@ export type AddPageInput = {
   skeleton: string;
   name: string;
 };
+
+export const AuthorKindSchema = z
+  .enum(["human", "agent"])
+  .openapi("AuthorKind");
+
+export type AuthorKind = z.infer<typeof AuthorKindSchema>;
+
+export const CommentSchema = z
+  .object({
+    id: z.string(),
+    authorKind: AuthorKindSchema,
+    body: z.string(),
+    createdAt: z.string(),
+  })
+  .openapi("Comment");
+
+export type Comment = z.infer<typeof CommentSchema>;
+
+export const ThreadSchema = z
+  .object({
+    id: z.string(),
+    document: z.string(),
+    node: z.string(),
+    awaitingReply: z.boolean(),
+    comments: z.array(CommentSchema),
+  })
+  .openapi("Thread");
+
+export type Thread = z.infer<typeof ThreadSchema>;
+
+export const ThreadListSchema = z
+  .object({ threads: z.array(ThreadSchema) })
+  .openapi("ThreadList");
+
+export const AddThreadSchema = z
+  .object({
+    document: z.string(),
+    node: z.string(),
+    authorKind: AuthorKindSchema,
+    body: z.string(),
+  })
+  .openapi("AddThread");
+
+export type AddThreadInput = z.infer<typeof AddThreadSchema>;
+
+export const AddCommentSchema = z
+  .object({ authorKind: AuthorKindSchema, body: z.string() })
+  .openapi("AddComment");
+
+export type AddCommentInput = z.infer<typeof AddCommentSchema>;
+
+export type ThreadFilter = { document?: string; awaitingReply?: true };

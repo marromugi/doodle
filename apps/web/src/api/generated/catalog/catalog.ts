@@ -25,13 +25,17 @@ import type {
 
 import type {
   AbortedRequests,
+  AddComment,
+  AddThread,
   AdoptProposalBody,
   CatalogError,
+  Comment,
   CompleteRequestBody,
   DocumentEntry,
   FileList,
   GetDocumentSummary200,
   ListRequestsParams,
+  ListThreadsParams,
   Page,
   PageList,
   PutDocumentSummary200,
@@ -39,6 +43,8 @@ import type {
   Request,
   RequestList,
   TakeRequestBody,
+  Thread,
+  ThreadList,
   Thumbnail,
   ThumbnailPut,
   TransitionError,
@@ -4183,6 +4189,697 @@ export function useGetPageSuspense<
   ) as UseSuspenseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
   };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type addThreadResponse201 = {
+  data: Thread;
+  status: 201;
+};
+
+export type addThreadResponseSuccess = addThreadResponse201 & {
+  headers: Headers;
+};
+export type addThreadResponse = addThreadResponseSuccess;
+
+export const getAddThreadUrl = () => {
+  return `/api/threads`;
+};
+
+export const addThread = async (
+  addThreadBody?: AddThread,
+  options?: RequestInit,
+): Promise<addThreadResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  const res = await fetch(getAddThreadUrl(), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(addThreadBody),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: addThreadResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as addThreadResponse;
+};
+
+export const getAddThreadQueryKey = (addThreadBody?: AddThread) => {
+  return ["POST", `/api/threads`, addThreadBody] as const;
+};
+
+export const getAddThreadQueryOptions = <
+  TData = Awaited<ReturnType<typeof addThread>>,
+  TError = unknown,
+>(
+  addThreadBody?: AddThread,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof addThread>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAddThreadQueryKey(addThreadBody);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof addThread>>> = ({
+    signal,
+  }) => addThread(addThreadBody, { signal, ...fetchOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof addThread>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AddThreadQueryResult = NonNullable<
+  Awaited<ReturnType<typeof addThread>>
+>;
+export type AddThreadQueryError = unknown;
+
+export function useAddThread<
+  TData = Awaited<ReturnType<typeof addThread>>,
+  TError = unknown,
+>(
+  addThreadBody: undefined | AddThread,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof addThread>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof addThread>>,
+          TError,
+          Awaited<ReturnType<typeof addThread>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAddThread<
+  TData = Awaited<ReturnType<typeof addThread>>,
+  TError = unknown,
+>(
+  addThreadBody?: AddThread,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof addThread>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof addThread>>,
+          TError,
+          Awaited<ReturnType<typeof addThread>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAddThread<
+  TData = Awaited<ReturnType<typeof addThread>>,
+  TError = unknown,
+>(
+  addThreadBody?: AddThread,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof addThread>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useAddThread<
+  TData = Awaited<ReturnType<typeof addThread>>,
+  TError = unknown,
+>(
+  addThreadBody?: AddThread,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof addThread>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAddThreadQueryOptions(addThreadBody, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type listThreadsResponse200 = {
+  data: ThreadList;
+  status: 200;
+};
+
+export type listThreadsResponseSuccess = listThreadsResponse200 & {
+  headers: Headers;
+};
+export type listThreadsResponse = listThreadsResponseSuccess;
+
+export const getListThreadsUrl = (params?: ListThreadsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/threads?${stringifiedParams}`
+    : `/api/threads`;
+};
+
+export const listThreads = async (
+  params?: ListThreadsParams,
+  options?: RequestInit,
+): Promise<listThreadsResponse> => {
+  const res = await fetch(getListThreadsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listThreadsResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as listThreadsResponse;
+};
+
+export const getListThreadsQueryKey = (params?: ListThreadsParams) => {
+  return [`/api/threads`, ...(params ? [params] : [])] as const;
+};
+
+export const getListThreadsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = unknown,
+>(
+  params?: ListThreadsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listThreads>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListThreadsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listThreads>>> = ({
+    signal,
+  }) => listThreads(params, { signal, ...fetchOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listThreads>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListThreadsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listThreads>>
+>;
+export type ListThreadsQueryError = unknown;
+
+export function useListThreads<
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = unknown,
+>(
+  params: undefined | ListThreadsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listThreads>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listThreads>>,
+          TError,
+          Awaited<ReturnType<typeof listThreads>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListThreads<
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = unknown,
+>(
+  params?: ListThreadsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listThreads>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listThreads>>,
+          TError,
+          Awaited<ReturnType<typeof listThreads>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListThreads<
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = unknown,
+>(
+  params?: ListThreadsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listThreads>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useListThreads<
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = unknown,
+>(
+  params?: ListThreadsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listThreads>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getListThreadsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListThreadsSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = unknown,
+>(
+  params?: ListThreadsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listThreads>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListThreadsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listThreads>>> = ({
+    signal,
+  }) => listThreads(params, { signal, ...fetchOptions });
+
+  return queryOptionsBuilder({
+    queryKey,
+    ...queryOptions,
+    queryFn: queryOptions?.queryFn ?? queryFn,
+  }) as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof listThreads>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> } & {
+    throwOnError?: ((this: never, error: TError) => boolean) & {
+      readonly __inferenceOnly: never;
+    };
+  };
+};
+
+export type ListThreadsSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listThreads>>
+>;
+export type ListThreadsSuspenseQueryError = unknown;
+
+export function useListThreadsSuspense<
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = unknown,
+>(
+  params: undefined | ListThreadsParams,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listThreads>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListThreadsSuspense<
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = unknown,
+>(
+  params?: ListThreadsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listThreads>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListThreadsSuspense<
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = unknown,
+>(
+  params?: ListThreadsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listThreads>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useListThreadsSuspense<
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = unknown,
+>(
+  params?: ListThreadsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof listThreads>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getListThreadsSuspenseQueryOptions(params, options);
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type addCommentResponse201 = {
+  data: Comment;
+  status: 201;
+};
+
+export type addCommentResponse404 = {
+  data: CatalogError;
+  status: 404;
+};
+
+export type addCommentResponseSuccess = addCommentResponse201 & {
+  headers: Headers;
+};
+export type addCommentResponseError = addCommentResponse404 & {
+  headers: Headers;
+};
+
+export type addCommentResponse =
+  addCommentResponseSuccess | addCommentResponseError;
+
+export const getAddCommentUrl = (id: string) => {
+  return `/api/threads/${id}/comments`;
+};
+
+export const addComment = async (
+  id: string,
+  addCommentBody?: AddComment,
+  options?: RequestInit,
+): Promise<addCommentResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  const res = await fetch(getAddCommentUrl(id), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(addCommentBody),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: addCommentResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as addCommentResponse;
+};
+
+export const getAddCommentQueryKey = (
+  id: string,
+  addCommentBody?: AddComment,
+) => {
+  return ["POST", `/api/threads/${id}/comments`, addCommentBody] as const;
+};
+
+export const getAddCommentQueryOptions = <
+  TData = Awaited<ReturnType<typeof addComment>>,
+  TError = CatalogError,
+>(
+  id: string,
+  addCommentBody?: AddComment,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof addComment>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAddCommentQueryKey(id, addCommentBody);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof addComment>>> = ({
+    signal,
+  }) => addComment(id, addCommentBody, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof addComment>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AddCommentQueryResult = NonNullable<
+  Awaited<ReturnType<typeof addComment>>
+>;
+export type AddCommentQueryError = CatalogError;
+
+export function useAddComment<
+  TData = Awaited<ReturnType<typeof addComment>>,
+  TError = CatalogError,
+>(
+  id: string,
+  addCommentBody: undefined | AddComment,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof addComment>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof addComment>>,
+          TError,
+          Awaited<ReturnType<typeof addComment>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAddComment<
+  TData = Awaited<ReturnType<typeof addComment>>,
+  TError = CatalogError,
+>(
+  id: string,
+  addCommentBody?: AddComment,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof addComment>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof addComment>>,
+          TError,
+          Awaited<ReturnType<typeof addComment>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAddComment<
+  TData = Awaited<ReturnType<typeof addComment>>,
+  TError = CatalogError,
+>(
+  id: string,
+  addCommentBody?: AddComment,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof addComment>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useAddComment<
+  TData = Awaited<ReturnType<typeof addComment>>,
+  TError = CatalogError,
+>(
+  id: string,
+  addCommentBody?: AddComment,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof addComment>>, TError, TData>
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAddCommentQueryOptions(id, addCommentBody, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
