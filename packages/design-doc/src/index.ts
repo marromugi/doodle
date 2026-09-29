@@ -1,6 +1,7 @@
 export * from "./apply/apply";
 export * from "./apply/failure";
 export * from "./diff/diff";
+export * from "./model/color";
 export * from "./model/discrepancy";
 export * from "./model/document";
 export * from "./model/node";

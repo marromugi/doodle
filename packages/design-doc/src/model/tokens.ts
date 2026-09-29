@@ -1,5 +1,7 @@
 import * as z from "zod";
 
+import { Color } from "./color";
+
 export const TokenKind = z.enum(["color", "typography", "space", "radius"]);
 export type TokenKind = z.infer<typeof TokenKind>;
 
@@ -13,7 +15,7 @@ export const Typography = z.strictObject({
 export type Typography = z.infer<typeof Typography>;
 
 export const Tokens = z.strictObject({
-  color: z.record(z.string(), z.string()),
+  color: z.record(z.string(), Color),
   typography: z.record(z.string(), Typography),
   space: z.record(z.string(), z.number()),
   radius: z.record(z.string(), z.number()),
