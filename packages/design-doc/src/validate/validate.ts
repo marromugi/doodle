@@ -1,3 +1,4 @@
+import { isColor } from "../model/color";
 import type { DraftDocument, TreeDocument } from "../model/document";
 import type { Node } from "../model/node";
 import type { PropDef } from "../model/props";
@@ -135,12 +136,29 @@ const checkMatch = (
   }
 };
 
+type ColorKey = "background" | "border.color" | "color";
+
 const walkValue = (
   value: Value,
   kind: TokenKind | null,
   ctx: Ctx,
   nodeId: string,
+  colorKey: ColorKey | null = null,
 ): void => {
+  if (typeof value === "string") {
+    if (colorKey !== null && !isColor(value)) {
+      fail(
+        ctx,
+        nodeId,
+      )({
+        code: "invalid-color",
+        key: colorKey,
+        value,
+        message: `"${value}" is not a colour`,
+      });
+    }
+    return;
+  }
   if (typeof value !== "object") return;
   if ("token" in value) return checkToken(value.token, kind, ctx, nodeId);
   if ("prop" in value) {
@@ -151,10 +169,10 @@ const walkValue = (
   if ("match" in value) {
     checkMatch(value, ctx, nodeId);
     for (const branch of Object.values(value.cases)) {
-      walkValue(branch, kind, ctx, nodeId);
+      walkValue(branch, kind, ctx, nodeId, colorKey);
     }
     if (value.default !== undefined)
-      walkValue(value.default, kind, ctx, nodeId);
+      walkValue(value.default, kind, ctx, nodeId, colorKey);
     return;
   }
   if ("object" in value) {
@@ -224,22 +242,26 @@ const walkNode = (node: Node, ctx: Ctx): void => {
       walkValue(node.when, null, ctx, id);
     }
   }
-  const style = (value: Value | undefined, kind: TokenKind | null) => {
-    if (value !== undefined) walkValue(value, kind, ctx, id);
+  const style = (
+    value: Value | undefined,
+    kind: TokenKind | null,
+    colorKey: ColorKey | null = null,
+  ) => {
+    if (value !== undefined) walkValue(value, kind, ctx, id, colorKey);
   };
 
   switch (node.type) {
     case "frame":
       style(node.layout?.gap, "space");
       style(node.layout?.padding, "space");
-      style(node.background, "color");
-      style(node.border?.color, "color");
+      style(node.background, "color", "background");
+      style(node.border?.color, "color", "border.color");
       style(node.radius, "radius");
       for (const child of node.children) walkNode(child, ctx);
       return;
     case "text":
       style(node.text, null);
-      style(node.color, "color");
+      style(node.color, "color", "color");
       style(node.typography, "typography");
       return;
     case "image":
