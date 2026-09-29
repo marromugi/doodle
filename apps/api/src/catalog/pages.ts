@@ -1,7 +1,8 @@
 import type { Clock } from "./files";
 import type { AddPageInput, CatalogPage, Failure } from "./schema";
 
-export type AddPageResult = { ok: true } | Failure<"file_not_found">;
+export type AddPageResult =
+  { ok: true } | Failure<"file_not_found" | "page_exists">;
 
 export async function addPage(
   db: D1Database,
@@ -13,7 +14,8 @@ export async function addPage(
     .prepare(
       `INSERT INTO pages (id, file_id, name, skeleton_document_id, adopted_proposal_document_id, created_at)
        SELECT ?1, ?2, ?3, ?4, NULL, ?5
-       WHERE EXISTS (SELECT 1 FROM files WHERE id = ?2 AND kind = 'app')`,
+       WHERE EXISTS (SELECT 1 FROM files WHERE id = ?2 AND kind = 'app')
+         AND NOT EXISTS (SELECT 1 FROM pages WHERE id = ?1)`,
     )
     .bind(
       input.id,
@@ -24,6 +26,17 @@ export async function addPage(
     )
     .run();
   if (inserted.meta.changes === 0) {
+    const existing = await db
+      .prepare("SELECT 1 AS found FROM pages WHERE id = ?")
+      .bind(input.id)
+      .first();
+    if (existing !== null) {
+      return {
+        ok: false,
+        code: "page_exists",
+        message: `Page ${input.id} already exists.`,
+      };
+    }
     return {
       ok: false,
       code: "file_not_found",
@@ -68,7 +81,12 @@ export async function getPage(
 export async function listPages(
   db: D1Database,
   file: string,
-): Promise<CatalogPage[]> {
+): Promise<CatalogPage[] | null> {
+  const found = await db
+    .prepare("SELECT 1 AS found FROM files WHERE id = ?")
+    .bind(file)
+    .first();
+  if (found === null) return null;
   const rows = await db
     .prepare(
       `SELECT ${PAGE_COLUMNS} FROM pages WHERE file_id = ? ORDER BY created_at, rowid`,

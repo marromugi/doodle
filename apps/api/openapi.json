@@ -1364,6 +1364,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "存在しないファイル ID です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogError"
+                }
+              }
+            }
           }
         }
       }

@@ -4192,10 +4192,20 @@ export type listPagesResponse200 = {
   status: 200;
 };
 
+export type listPagesResponse404 = {
+  data: CatalogError;
+  status: 404;
+};
+
 export type listPagesResponseSuccess = listPagesResponse200 & {
   headers: Headers;
 };
-export type listPagesResponse = listPagesResponseSuccess;
+export type listPagesResponseError = listPagesResponse404 & {
+  headers: Headers;
+};
+
+export type listPagesResponse =
+  listPagesResponseSuccess | listPagesResponseError;
 
 export const getListPagesUrl = (fileId: string) => {
   return `/api/files/${fileId}/pages`;
@@ -4226,7 +4236,7 @@ export const getListPagesQueryKey = (fileId: string) => {
 
 export const getListPagesQueryOptions = <
   TData = Awaited<ReturnType<typeof listPages>>,
-  TError = unknown,
+  TError = CatalogError,
 >(
   fileId: string,
   options?: {
@@ -4257,11 +4267,11 @@ export const getListPagesQueryOptions = <
 export type ListPagesQueryResult = NonNullable<
   Awaited<ReturnType<typeof listPages>>
 >;
-export type ListPagesQueryError = unknown;
+export type ListPagesQueryError = CatalogError;
 
 export function useListPages<
   TData = Awaited<ReturnType<typeof listPages>>,
-  TError = unknown,
+  TError = CatalogError,
 >(
   fileId: string,
   options: {
@@ -4284,7 +4294,7 @@ export function useListPages<
 };
 export function useListPages<
   TData = Awaited<ReturnType<typeof listPages>>,
-  TError = unknown,
+  TError = CatalogError,
 >(
   fileId: string,
   options?: {
@@ -4307,7 +4317,7 @@ export function useListPages<
 };
 export function useListPages<
   TData = Awaited<ReturnType<typeof listPages>>,
-  TError = unknown,
+  TError = CatalogError,
 >(
   fileId: string,
   options?: {
@@ -4323,7 +4333,7 @@ export function useListPages<
 
 export function useListPages<
   TData = Awaited<ReturnType<typeof listPages>>,
-  TError = unknown,
+  TError = CatalogError,
 >(
   fileId: string,
   options?: {
@@ -4348,7 +4358,7 @@ export function useListPages<
 
 export const getListPagesSuspenseQueryOptions = <
   TData = Awaited<ReturnType<typeof listPages>>,
-  TError = unknown,
+  TError = CatalogError,
 >(
   fileId: string,
   options?: {
@@ -4388,11 +4398,11 @@ export const getListPagesSuspenseQueryOptions = <
 export type ListPagesSuspenseQueryResult = NonNullable<
   Awaited<ReturnType<typeof listPages>>
 >;
-export type ListPagesSuspenseQueryError = unknown;
+export type ListPagesSuspenseQueryError = CatalogError;
 
 export function useListPagesSuspense<
   TData = Awaited<ReturnType<typeof listPages>>,
-  TError = unknown,
+  TError = CatalogError,
 >(
   fileId: string,
   options: {
@@ -4411,7 +4421,7 @@ export function useListPagesSuspense<
 };
 export function useListPagesSuspense<
   TData = Awaited<ReturnType<typeof listPages>>,
-  TError = unknown,
+  TError = CatalogError,
 >(
   fileId: string,
   options?: {
@@ -4430,7 +4440,7 @@ export function useListPagesSuspense<
 };
 export function useListPagesSuspense<
   TData = Awaited<ReturnType<typeof listPages>>,
-  TError = unknown,
+  TError = CatalogError,
 >(
   fileId: string,
   options?: {
@@ -4450,7 +4460,7 @@ export function useListPagesSuspense<
 
 export function useListPagesSuspense<
   TData = Awaited<ReturnType<typeof listPages>>,
-  TError = unknown,
+  TError = CatalogError,
 >(
   fileId: string,
   options?: {

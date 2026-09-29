@@ -36,9 +36,19 @@ function toRequest(row: RequestRow, references: string[]): CatalogRequest {
   };
 }
 
+// The page exists, and the previous round, when there is one, awaits a choice on that same page.
+const WRITABLE = `EXISTS (SELECT 1 FROM pages WHERE id = ?2)
+  AND (?5 IS NULL
+    OR EXISTS (SELECT 1 FROM requests WHERE id = ?5 AND state = 'awaitingChoice' AND page_id = ?2))`;
+
 export type AddRequestResult =
   | { ok: true; request: CatalogRequest }
-  | Failure<"previous_not_awaiting_choice" | "write_failed">;
+  | Failure<
+      | "page_not_found"
+      | "previous_other_page"
+      | "previous_not_awaiting_choice"
+      | "write_failed"
+    >;
 
 export async function addRequest(
   db: D1Database,
@@ -56,8 +66,7 @@ export async function addRequest(
       .prepare(
         `INSERT INTO requests (${REQUEST_COLUMNS}, created_at)
          SELECT ?1, ?2, ?3, ?4, ?5, 'requested', NULL, 0, NULL, ?6
-         WHERE ?5 IS NULL
-            OR EXISTS (SELECT 1 FROM requests WHERE id = ?5 AND state = 'awaitingChoice')`,
+         WHERE ${WRITABLE}`,
       )
       .bind(
         id,
@@ -78,9 +87,9 @@ export async function addRequest(
     db
       .prepare(
         `UPDATE requests SET state = 'completed'
-         WHERE id = ?1 AND state = 'awaitingChoice'`,
+         WHERE id = ?5 AND ${WRITABLE}`,
       )
-      .bind(input.previous),
+      .bind(id, input.page, input.snapshot, input.feedback, input.previous),
   ];
 
   let results: D1Result[];
@@ -97,6 +106,28 @@ export async function addRequest(
   }
 
   if (results[0]!.meta.changes === 0) {
+    const page = await db
+      .prepare("SELECT 1 AS found FROM pages WHERE id = ?")
+      .bind(input.page)
+      .first();
+    if (page === null) {
+      return {
+        ok: false,
+        code: "page_not_found",
+        message: `Page ${input.page} does not exist.`,
+      };
+    }
+    const previous = await db
+      .prepare("SELECT page_id FROM requests WHERE id = ?")
+      .bind(input.previous)
+      .first<{ page_id: string }>();
+    if (previous !== null && previous.page_id !== input.page) {
+      return {
+        ok: false,
+        code: "previous_other_page",
+        message: `Request ${input.previous} belongs to another page.`,
+      };
+    }
     return {
       ok: false,
       code: "previous_not_awaiting_choice",

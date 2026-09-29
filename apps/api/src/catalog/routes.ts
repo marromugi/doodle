@@ -460,11 +460,21 @@ catalogRoutes.openapi(
         description: "アプリのページの一覧です。記録した順に並びます。",
         content: { "application/json": { schema: PageListSchema } },
       },
+      404: {
+        description: "存在しないファイル ID です。",
+        content: { "application/json": { schema: CatalogErrorSchema } },
+      },
     },
   }),
-  async (c) =>
-    c.json(
-      { pages: await listPages(c.env.DB, c.req.valid("param").fileId) },
-      200,
-    ),
+  async (c) => {
+    const { fileId } = c.req.valid("param");
+    const pages = await listPages(c.env.DB, fileId);
+    if (pages === null) {
+      return c.json(
+        { code: "file_not_found", message: `File ${fileId} does not exist.` },
+        404,
+      );
+    }
+    return c.json({ pages }, 200);
+  },
 );
