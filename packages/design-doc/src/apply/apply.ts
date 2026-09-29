@@ -117,6 +117,16 @@ const setPath = (
   return null;
 };
 
+/** IDs of the nodes held by the value a dot path currently points at. */
+const idsInside = (owner: Json, key: string): string[] => {
+  let current: unknown = owner;
+  for (const segment of key.split(".")) {
+    if (!isRecord(current) || !own(current, segment)) return [];
+    current = current[segment];
+  }
+  return valueIds({ value: current });
+};
+
 const treePlan = (
   doc: TreeDocument,
   op: EditOperation,
@@ -161,6 +171,7 @@ const treePlan = (
       const target = locate(root, op.node);
       let failure: ApplyFailure | null = null;
       let dropped: string[] = [];
+      let replaced: string[] = [];
       let entering: string[] = [];
       if (target) {
         const trial = structuredClone(target.node);
@@ -168,12 +179,13 @@ const treePlan = (
         if (!failure) {
           const before = new Set(valueIds(target.node));
           const after = new Set(valueIds(trial));
+          replaced = idsInside(target.node, op.key);
           dropped = [...before].filter((id) => !after.has(id));
           entering = [...after].filter((id) => !before.has(id));
         }
       }
       return {
-        targets: [node(op.node), ...dropped.map(node)],
+        targets: [node(op.node), ...replaced.map(node)],
         check: () => {
           if (!target) return unknownNode(op.node);
           return failure ?? firstReusedId(entering, everUsed, live);
@@ -182,7 +194,7 @@ const treePlan = (
           const at = locate(rootOf(next), op.node)!;
           setPath(at.node, op.node, op.key, op.value);
           return {
-            touched: [node(op.node)],
+            touched: [node(op.node), ...replaced.map(node)],
             removed: dropped,
             entering,
           };
