@@ -114,11 +114,11 @@ export const draftStep = (doc: DraftDocument, op: EditOperation): Step => {
       const present =
         parts !== undefined && has(doc.tokens[parts.kind], parts.name);
       if (op.type === "add-token") {
+        if (present)
+          return exists(op.token, `token "${op.token}" already exists`);
         if (!parts || !valueFits(parts.kind, op.value)) {
           return notApplicable(`"${op.token}" cannot take this value`);
         }
-        if (present)
-          return exists(op.token, `token "${op.token}" already exists`);
       } else if (!parts || !present) {
         return missing(op.token, `token "${op.token}" does not exist`);
       }

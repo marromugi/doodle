@@ -51,6 +51,20 @@ const mapContainer = (
     isContainer(n) ? { ...n, children: f(n.children) } : n,
   );
 
+const setPath = (target: unknown, path: string[], value: unknown): unknown => {
+  const [head, ...tail] = path;
+  const copy = (
+    Array.isArray(target) ? [...target] : { ...(target as object) }
+  ) as Record<string, unknown>;
+  if (tail.length === 0) {
+    if (value === null) delete copy[head!];
+    else copy[head!] = value;
+  } else {
+    copy[head!] = setPath(copy[head!] ?? {}, tail, value);
+  }
+  return copy;
+};
+
 const insertAt = (children: Node[], index: number, node: Node): Node[] => {
   const at = Math.min(index, children.length);
   return [...children.slice(0, at), node, ...children.slice(at)];
@@ -112,12 +126,12 @@ export const treeStep = (
       if (early.length > 0) return { ok: false, reasons: early };
       const node = find(root, op.node);
       if (!node) return unknownNode(op.node);
-      const next = mapNode(root, op.node, (n) => {
-        const { [op.key]: _old, ...rest } = n as Record<string, unknown>;
-        return (
-          op.value === null ? rest : { ...rest, [op.key]: op.value }
-        ) as Node;
-      });
+      const path = op.key.split(".");
+      const next = mapNode(
+        root,
+        op.node,
+        (n) => setPath(n, path, op.value) as Node,
+      );
       return finish(doc, next, [op.node], [], []);
     }
     case "add": {
