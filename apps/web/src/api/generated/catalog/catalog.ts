@@ -27,6 +27,11 @@ import type {
   CatalogError,
   DocumentEntry,
   FileList,
+  GetDocumentSummary200,
+  PutDocumentSummary200,
+  PutDocumentSummaryBody,
+  Thumbnail,
+  ThumbnailPut,
 } from "../doodleAPI.schemas";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -908,6 +913,1123 @@ export function useGetDocumentSuspense<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetDocumentSuspenseQueryOptions(id, options);
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type putDocumentSummaryResponse200 = {
+  data: PutDocumentSummary200;
+  status: 200;
+};
+
+export type putDocumentSummaryResponseSuccess =
+  putDocumentSummaryResponse200 & {
+    headers: Headers;
+  };
+export type putDocumentSummaryResponse = putDocumentSummaryResponseSuccess;
+
+export const getPutDocumentSummaryUrl = (documentId: string) => {
+  return `/api/documents/${documentId}/summary`;
+};
+
+export const putDocumentSummary = async (
+  documentId: string,
+  putDocumentSummaryBody?: PutDocumentSummaryBody,
+  options?: RequestInit,
+): Promise<putDocumentSummaryResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  const res = await fetch(getPutDocumentSummaryUrl(documentId), {
+    ...options,
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(putDocumentSummaryBody),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: putDocumentSummaryResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as putDocumentSummaryResponse;
+};
+
+export const getPutDocumentSummaryQueryKey = (
+  documentId: string,
+  putDocumentSummaryBody?: PutDocumentSummaryBody,
+) => {
+  return [
+    "PUT",
+    `/api/documents/${documentId}/summary`,
+    putDocumentSummaryBody,
+  ] as const;
+};
+
+export const getPutDocumentSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof putDocumentSummary>>,
+  TError = unknown,
+>(
+  documentId: string,
+  putDocumentSummaryBody?: PutDocumentSummaryBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof putDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getPutDocumentSummaryQueryKey(documentId, putDocumentSummaryBody);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof putDocumentSummary>>
+  > = ({ signal }) =>
+    putDocumentSummary(documentId, putDocumentSummaryBody, {
+      signal,
+      ...fetchOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: documentId !== null && documentId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof putDocumentSummary>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PutDocumentSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof putDocumentSummary>>
+>;
+export type PutDocumentSummaryQueryError = unknown;
+
+export function usePutDocumentSummary<
+  TData = Awaited<ReturnType<typeof putDocumentSummary>>,
+  TError = unknown,
+>(
+  documentId: string,
+  putDocumentSummaryBody: undefined | PutDocumentSummaryBody,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof putDocumentSummary>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof putDocumentSummary>>,
+          TError,
+          Awaited<ReturnType<typeof putDocumentSummary>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePutDocumentSummary<
+  TData = Awaited<ReturnType<typeof putDocumentSummary>>,
+  TError = unknown,
+>(
+  documentId: string,
+  putDocumentSummaryBody?: PutDocumentSummaryBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof putDocumentSummary>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof putDocumentSummary>>,
+          TError,
+          Awaited<ReturnType<typeof putDocumentSummary>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePutDocumentSummary<
+  TData = Awaited<ReturnType<typeof putDocumentSummary>>,
+  TError = unknown,
+>(
+  documentId: string,
+  putDocumentSummaryBody?: PutDocumentSummaryBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof putDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function usePutDocumentSummary<
+  TData = Awaited<ReturnType<typeof putDocumentSummary>>,
+  TError = unknown,
+>(
+  documentId: string,
+  putDocumentSummaryBody?: PutDocumentSummaryBody,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof putDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPutDocumentSummaryQueryOptions(
+    documentId,
+    putDocumentSummaryBody,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type getDocumentSummaryResponse200 = {
+  data: GetDocumentSummary200;
+  status: 200;
+};
+
+export type getDocumentSummaryResponse404 = {
+  data: CatalogError;
+  status: 404;
+};
+
+export type getDocumentSummaryResponseSuccess =
+  getDocumentSummaryResponse200 & {
+    headers: Headers;
+  };
+export type getDocumentSummaryResponseError = getDocumentSummaryResponse404 & {
+  headers: Headers;
+};
+
+export type getDocumentSummaryResponse =
+  getDocumentSummaryResponseSuccess | getDocumentSummaryResponseError;
+
+export const getGetDocumentSummaryUrl = (documentId: string) => {
+  return `/api/documents/${documentId}/summary`;
+};
+
+export const getDocumentSummary = async (
+  documentId: string,
+  options?: RequestInit,
+): Promise<getDocumentSummaryResponse> => {
+  const res = await fetch(getGetDocumentSummaryUrl(documentId), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getDocumentSummaryResponse["data"] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as getDocumentSummaryResponse;
+};
+
+export const getGetDocumentSummaryQueryKey = (documentId: string) => {
+  return [`/api/documents/${documentId}/summary`] as const;
+};
+
+export const getGetDocumentSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDocumentSummary>>,
+  TError = CatalogError,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetDocumentSummaryQueryKey(documentId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDocumentSummary>>
+  > = ({ signal }) =>
+    getDocumentSummary(documentId, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: documentId !== null && documentId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDocumentSummary>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetDocumentSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDocumentSummary>>
+>;
+export type GetDocumentSummaryQueryError = CatalogError;
+
+export function useGetDocumentSummary<
+  TData = Awaited<ReturnType<typeof getDocumentSummary>>,
+  TError = CatalogError,
+>(
+  documentId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentSummary>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDocumentSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getDocumentSummary>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDocumentSummary<
+  TData = Awaited<ReturnType<typeof getDocumentSummary>>,
+  TError = CatalogError,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentSummary>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDocumentSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getDocumentSummary>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDocumentSummary<
+  TData = Awaited<ReturnType<typeof getDocumentSummary>>,
+  TError = CatalogError,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetDocumentSummary<
+  TData = Awaited<ReturnType<typeof getDocumentSummary>>,
+  TError = CatalogError,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetDocumentSummaryQueryOptions(documentId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetDocumentSummarySuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDocumentSummary>>,
+  TError = CatalogError,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetDocumentSummaryQueryKey(documentId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDocumentSummary>>
+  > = ({ signal }) =>
+    getDocumentSummary(documentId, { signal, ...fetchOptions });
+
+  return queryOptionsBuilder({
+    queryKey,
+    ...queryOptions,
+    queryFn: queryOptions?.queryFn ?? queryFn,
+  }) as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof getDocumentSummary>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> } & {
+    throwOnError?: ((this: never, error: TError) => boolean) & {
+      readonly __inferenceOnly: never;
+    };
+  };
+};
+
+export type GetDocumentSummarySuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDocumentSummary>>
+>;
+export type GetDocumentSummarySuspenseQueryError = CatalogError;
+
+export function useGetDocumentSummarySuspense<
+  TData = Awaited<ReturnType<typeof getDocumentSummary>>,
+  TError = CatalogError,
+>(
+  documentId: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDocumentSummarySuspense<
+  TData = Awaited<ReturnType<typeof getDocumentSummary>>,
+  TError = CatalogError,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDocumentSummarySuspense<
+  TData = Awaited<ReturnType<typeof getDocumentSummary>>,
+  TError = CatalogError,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetDocumentSummarySuspense<
+  TData = Awaited<ReturnType<typeof getDocumentSummary>>,
+  TError = CatalogError,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentSummary>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetDocumentSummarySuspenseQueryOptions(
+    documentId,
+    options,
+  );
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type putDocumentThumbnailResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type putDocumentThumbnailResponseSuccess =
+  putDocumentThumbnailResponse204 & {
+    headers: Headers;
+  };
+export type putDocumentThumbnailResponse = putDocumentThumbnailResponseSuccess;
+
+export const getPutDocumentThumbnailUrl = (documentId: string) => {
+  return `/api/documents/${documentId}/thumbnail`;
+};
+
+export const putDocumentThumbnail = async (
+  documentId: string,
+  thumbnailPut?: ThumbnailPut,
+  options?: RequestInit,
+): Promise<putDocumentThumbnailResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  const res = await fetch(getPutDocumentThumbnailUrl(documentId), {
+    ...options,
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(thumbnailPut),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: putDocumentThumbnailResponse["data"] = body
+    ? JSON.parse(body)
+    : undefined;
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as putDocumentThumbnailResponse;
+};
+
+export const getPutDocumentThumbnailQueryKey = (
+  documentId: string,
+  thumbnailPut?: ThumbnailPut,
+) => {
+  return [
+    "PUT",
+    `/api/documents/${documentId}/thumbnail`,
+    thumbnailPut,
+  ] as const;
+};
+
+export const getPutDocumentThumbnailQueryOptions = <
+  TData = Awaited<ReturnType<typeof putDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  thumbnailPut?: ThumbnailPut,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof putDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getPutDocumentThumbnailQueryKey(documentId, thumbnailPut);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof putDocumentThumbnail>>
+  > = ({ signal }) =>
+    putDocumentThumbnail(documentId, thumbnailPut, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: documentId !== null && documentId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof putDocumentThumbnail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PutDocumentThumbnailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof putDocumentThumbnail>>
+>;
+export type PutDocumentThumbnailQueryError = unknown;
+
+export function usePutDocumentThumbnail<
+  TData = Awaited<ReturnType<typeof putDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  thumbnailPut: undefined | ThumbnailPut,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof putDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof putDocumentThumbnail>>,
+          TError,
+          Awaited<ReturnType<typeof putDocumentThumbnail>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePutDocumentThumbnail<
+  TData = Awaited<ReturnType<typeof putDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  thumbnailPut?: ThumbnailPut,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof putDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof putDocumentThumbnail>>,
+          TError,
+          Awaited<ReturnType<typeof putDocumentThumbnail>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePutDocumentThumbnail<
+  TData = Awaited<ReturnType<typeof putDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  thumbnailPut?: ThumbnailPut,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof putDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function usePutDocumentThumbnail<
+  TData = Awaited<ReturnType<typeof putDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  thumbnailPut?: ThumbnailPut,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof putDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPutDocumentThumbnailQueryOptions(
+    documentId,
+    thumbnailPut,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type getDocumentThumbnailResponse200 = {
+  data: Thumbnail;
+  status: 200;
+};
+
+export type getDocumentThumbnailResponseSuccess =
+  getDocumentThumbnailResponse200 & {
+    headers: Headers;
+  };
+export type getDocumentThumbnailResponse = getDocumentThumbnailResponseSuccess;
+
+export const getGetDocumentThumbnailUrl = (documentId: string) => {
+  return `/api/documents/${documentId}/thumbnail`;
+};
+
+export const getDocumentThumbnail = async (
+  documentId: string,
+  options?: RequestInit,
+): Promise<getDocumentThumbnailResponse> => {
+  const res = await fetch(getGetDocumentThumbnailUrl(documentId), {
+    ...options,
+    method: "GET",
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getDocumentThumbnailResponse["data"] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as getDocumentThumbnailResponse;
+};
+
+export const getGetDocumentThumbnailQueryKey = (documentId: string) => {
+  return [`/api/documents/${documentId}/thumbnail`] as const;
+};
+
+export const getGetDocumentThumbnailQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetDocumentThumbnailQueryKey(documentId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDocumentThumbnail>>
+  > = ({ signal }) =>
+    getDocumentThumbnail(documentId, { signal, ...fetchOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: documentId !== null && documentId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDocumentThumbnail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetDocumentThumbnailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDocumentThumbnail>>
+>;
+export type GetDocumentThumbnailQueryError = unknown;
+
+export function useGetDocumentThumbnail<
+  TData = Awaited<ReturnType<typeof getDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDocumentThumbnail>>,
+          TError,
+          Awaited<ReturnType<typeof getDocumentThumbnail>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDocumentThumbnail<
+  TData = Awaited<ReturnType<typeof getDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDocumentThumbnail>>,
+          TError,
+          Awaited<ReturnType<typeof getDocumentThumbnail>>
+        >,
+        "initialData"
+      >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDocumentThumbnail<
+  TData = Awaited<ReturnType<typeof getDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetDocumentThumbnail<
+  TData = Awaited<ReturnType<typeof getDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetDocumentThumbnailQueryOptions(documentId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetDocumentThumbnailSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+) => {
+  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetDocumentThumbnailQueryKey(documentId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDocumentThumbnail>>
+  > = ({ signal }) =>
+    getDocumentThumbnail(documentId, { signal, ...fetchOptions });
+
+  return queryOptionsBuilder({
+    queryKey,
+    ...queryOptions,
+    queryFn: queryOptions?.queryFn ?? queryFn,
+  }) as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof getDocumentThumbnail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> } & {
+    throwOnError?: ((this: never, error: TError) => boolean) & {
+      readonly __inferenceOnly: never;
+    };
+  };
+};
+
+export type GetDocumentThumbnailSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDocumentThumbnail>>
+>;
+export type GetDocumentThumbnailSuspenseQueryError = unknown;
+
+export function useGetDocumentThumbnailSuspense<
+  TData = Awaited<ReturnType<typeof getDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDocumentThumbnailSuspense<
+  TData = Awaited<ReturnType<typeof getDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDocumentThumbnailSuspense<
+  TData = Awaited<ReturnType<typeof getDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useGetDocumentThumbnailSuspense<
+  TData = Awaited<ReturnType<typeof getDocumentThumbnail>>,
+  TError = unknown,
+>(
+  documentId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getDocumentThumbnail>>,
+        TError,
+        TData
+      >
+    >;
+    fetch?: RequestInit;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetDocumentThumbnailSuspenseQueryOptions(
+    documentId,
+    options,
+  );
 
   const query = useSuspenseQuery(
     queryOptions,
