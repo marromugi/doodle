@@ -16,7 +16,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm --filter @doodle/web exec playwright install --with-deps chromium
 
       - name: Generated files are up to date
         run: |
