@@ -1,0 +1,15 @@
+{
+  "name": "@doodle/protocol",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@doodle/design-doc": "workspace:*",
+    "zod": "^4.6.5"
+  }
+}
