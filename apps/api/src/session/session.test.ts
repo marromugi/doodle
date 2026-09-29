@@ -4,7 +4,12 @@ import type {
   Scope,
   TreeDocument,
 } from "@doodle/design-doc";
-import type { ClientMessage, ServerMessage } from "@doodle/protocol";
+import {
+  identityToSearch,
+  type ClientMessage,
+  type Identity,
+  type ServerMessage,
+} from "@doodle/protocol";
 import { runInDurableObject } from "cloudflare:test";
 import { env, exports } from "cloudflare:workers";
 import { describe, expect, test } from "vitest";
@@ -18,8 +23,6 @@ import type {
   ScopeRead,
 } from "./catalog-port";
 import type { DocumentSession } from "./document-session";
-
-type Identity = { kind: "human" } | { kind: "agent"; agentId: string };
 
 const human: Identity = { kind: "human" };
 const agentA: Identity = { kind: "agent", agentId: "agt_A" };
@@ -58,10 +61,7 @@ class Client {
     documentId: string,
     identity: Identity,
   ): Promise<Client> {
-    const query =
-      identity.kind === "human"
-        ? "kind=human"
-        : `kind=agent&agentId=${identity.agentId}`;
+    const query = identityToSearch(identity);
     const response = await exports.default.fetch(
       `http://localhost/api/documents/${documentId}/session?${query}`,
       { headers: { Upgrade: "websocket" } },
