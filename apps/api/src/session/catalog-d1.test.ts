@@ -71,7 +71,11 @@ const boxDocument = (
 });
 
 const addDesignSystem = async (): Promise<string> => {
-  const result = await addFile(db, { kind: "designSystem", name: "Kit" });
+  const result = await addFile(db, {
+    kind: "designSystem",
+    name: "Kit",
+    draft: newId("doc_draft"),
+  });
   if (!result.ok) throw new Error(result.message);
   return result.file.id;
 };
@@ -105,6 +109,7 @@ const register = async (): Promise<Registered> => {
     file: app,
     skeleton: newId("doc_skel"),
     name: "Home",
+    release: null,
   });
   if (!added.ok) throw new Error(added.message);
 

@@ -3,6 +3,7 @@ import type {
   AddRequestInput,
   CatalogRequest,
   Failure,
+  ReleaseReference,
   RequestState,
 } from "./schema";
 
@@ -199,4 +200,77 @@ export async function listRequests(
     byRequest.set(reference.request_id, list);
   }
   return rows.results.map((row) => toRequest(row, byRequest.get(row.id) ?? []));
+}
+
+export type GetRequestAppResult =
+  | {
+      ok: true;
+      state: RequestState;
+      agent: string | null;
+      page: string;
+      file: string;
+      reference: ReleaseReference | null;
+    }
+  | Failure<"request_not_found" | "page_not_found" | "file_not_found">;
+
+/** A request with its page and the app of the page, read in one query. */
+export async function getRequestApp(
+  db: D1Database,
+  id: string,
+): Promise<GetRequestAppResult> {
+  const row = await db
+    .prepare(
+      `SELECT r.state, r.agent_id, r.page_id, p.id AS found_page, f.id AS found_file,
+              f.reference_design_system_id, f.reference_release_id
+       FROM requests r
+       LEFT JOIN pages p ON p.id = r.page_id
+       LEFT JOIN files f ON f.id = p.file_id
+       WHERE r.id = ?`,
+    )
+    .bind(id)
+    .first<{
+      state: RequestState;
+      agent_id: string | null;
+      page_id: string;
+      found_page: string | null;
+      found_file: string | null;
+      reference_design_system_id: string | null;
+      reference_release_id: string | null;
+    }>();
+  if (row === null) {
+    return {
+      ok: false,
+      code: "request_not_found",
+      message: `Request ${id} does not exist.`,
+    };
+  }
+  if (row.found_page === null) {
+    return {
+      ok: false,
+      code: "page_not_found",
+      message: `Page ${row.page_id} does not exist.`,
+    };
+  }
+  if (row.found_file === null) {
+    return {
+      ok: false,
+      code: "file_not_found",
+      message: `The file of page ${row.page_id} does not exist.`,
+    };
+  }
+  return {
+    ok: true,
+    state: row.state,
+    agent: row.agent_id,
+    page: row.page_id,
+    file: row.found_file,
+    reference:
+      row.reference_design_system_id !== null &&
+      row.reference_release_id !== null
+        ? {
+            designSystem: row.reference_design_system_id,
+            release: row.reference_release_id,
+          }
+        : null,
+  };
 }

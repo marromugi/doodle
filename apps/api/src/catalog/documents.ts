@@ -1,4 +1,96 @@
-import type { DocumentEntry, Failure } from "./schema";
+import type {
+  AddProposalInput,
+  DocumentEntry,
+  Failure,
+  RequestState,
+} from "./schema";
+
+export type RegisterProposalResult =
+  | { ok: true }
+  | Failure<
+      | "request_not_found"
+      | "page_not_found"
+      | "file_not_found"
+      | "document_exists"
+    >
+  | {
+      ok: false;
+      code: "request_state_mismatch";
+      message: string;
+      state: RequestState;
+      agent: string | null;
+    };
+
+// A proposal is registered only while its request is in progress and held by the agent.
+export async function registerProposal(
+  db: D1Database,
+  input: AddProposalInput,
+): Promise<RegisterProposalResult> {
+  const inserted = await db
+    .prepare(
+      `INSERT INTO documents (id, file_id, kind, page_id, request_id, release_id)
+       SELECT ?1, ?2, 'proposal', r.page_id, r.id, ?5
+       FROM requests r
+       WHERE r.id = ?3 AND r.state = 'inProgress' AND r.agent_id = ?4
+         AND EXISTS (SELECT 1 FROM pages WHERE id = r.page_id)
+         AND EXISTS (SELECT 1 FROM files WHERE id = ?2)
+         AND NOT EXISTS (SELECT 1 FROM documents WHERE id = ?1)`,
+    )
+    .bind(input.id, input.file, input.request, input.agent, input.release)
+    .run();
+  if (inserted.meta.changes > 0) return { ok: true };
+
+  const [requestRows, fileRows] = await db.batch<{
+    state?: RequestState;
+    agent_id?: string | null;
+    page_found?: number | null;
+    found?: number;
+  }>([
+    db
+      .prepare(
+        `SELECT state, agent_id, (SELECT 1 FROM pages WHERE id = r.page_id) AS page_found
+         FROM requests r WHERE id = ?`,
+      )
+      .bind(input.request),
+    db.prepare("SELECT 1 AS found FROM files WHERE id = ?").bind(input.file),
+  ]);
+  const request = requestRows!.results[0];
+  if (request === undefined) {
+    return {
+      ok: false,
+      code: "request_not_found",
+      message: `Request ${input.request} does not exist.`,
+    };
+  }
+  if (request.page_found === null) {
+    return {
+      ok: false,
+      code: "page_not_found",
+      message: `The page of request ${input.request} does not exist.`,
+    };
+  }
+  if (fileRows!.results[0] === undefined) {
+    return {
+      ok: false,
+      code: "file_not_found",
+      message: `File ${input.file} does not exist.`,
+    };
+  }
+  if (request.state !== "inProgress" || request.agent_id !== input.agent) {
+    return {
+      ok: false,
+      code: "request_state_mismatch",
+      message: `Request ${input.request} is ${request.state}.`,
+      state: request.state!,
+      agent: request.agent_id ?? null,
+    };
+  }
+  return {
+    ok: false,
+    code: "document_exists",
+    message: `Document ${input.id} is already registered.`,
+  };
+}
 
 export type RegisterDocumentResult =
   { ok: true } | Failure<"document_exists" | "file_not_found">;

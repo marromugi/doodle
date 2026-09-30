@@ -50,8 +50,11 @@ async function addApp(
   return id;
 }
 
-async function addDesignSystem(name = "Acme DS"): Promise<string> {
-  const result = await addFile(db, { kind: "designSystem", name });
+async function addDesignSystem(
+  draft: string,
+  name = "Acme DS",
+): Promise<string> {
+  const result = await addFile(db, { kind: "designSystem", name, draft });
   if (!result.ok) throw new Error(result.message);
   return result.file.id;
 }
@@ -62,16 +65,6 @@ async function registerSkeleton(id: string, file: string) {
     file,
     kind: "skeleton",
     page: `p_${id}`,
-    release: null,
-  });
-  if (!result.ok) throw new Error(result.message);
-}
-
-async function registerDraft(id: string, file: string) {
-  const result = await registerDocument(db, {
-    id,
-    file,
-    kind: "dsDraft",
     release: null,
   });
   if (!result.ok) throw new Error(result.message);
@@ -311,8 +304,7 @@ describe("file updated times", () => {
 
 describe("unreleased changes on design system items", () => {
   test("a draft at the release's revision has none and one revision ahead has some", async () => {
-    const ds = await addDesignSystem();
-    await registerDraft("doc_draft", ds);
+    const ds = await addDesignSystem("doc_draft");
     await insertRelease("rel_a", ds, 4);
 
     await putSummary("doc_draft", {
@@ -332,8 +324,7 @@ describe("unreleased changes on design system items", () => {
   });
 
   test("a design system with no release is false at draft revision 0 and true at revision 1", async () => {
-    const ds = await addDesignSystem();
-    await registerDraft("doc_draft2", ds);
+    const ds = await addDesignSystem("doc_draft2");
 
     await putSummary("doc_draft2", {
       updatedAt: "2026-03-01T00:00:00Z",

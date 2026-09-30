@@ -725,6 +725,379 @@
         "required": [
           "pages"
         ]
+      },
+      "CreatedFile": {
+        "type": "object",
+        "properties": {
+          "fileId": {
+            "type": "string"
+          },
+          "draftDocumentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ]
+      },
+      "CreateFileError400": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_name"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "RequestShapeError": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "error"
+        ]
+      },
+      "CreateFileError404": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "reference_not_found"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateFileError500": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "registration_failed",
+              "initialization_failed"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateFileError503": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "catalog_unavailable",
+              "session_unavailable"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateFileBody": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "designSystem"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points."
+              }
+            },
+            "required": [
+              "kind",
+              "name"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "app"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points."
+              },
+              "reference": {
+                "$ref": "#/components/schemas/ReleaseReference"
+              }
+            },
+            "required": [
+              "kind",
+              "name",
+              "reference"
+            ]
+          }
+        ]
+      },
+      "CreatedPage": {
+        "type": "object",
+        "properties": {
+          "pageId": {
+            "type": "string"
+          },
+          "skeletonDocumentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pageId",
+          "skeletonDocumentId"
+        ]
+      },
+      "CreatePageError400": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_name",
+              "not_an_app"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreatePageError404": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "file_not_found"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreatePageError500": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "registration_failed",
+              "initialization_failed"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreatePageError503": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "catalog_unavailable",
+              "session_unavailable"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreatePageBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CreatedCandidate": {
+        "type": "object",
+        "properties": {
+          "candidateDocumentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidateDocumentId"
+        ]
+      },
+      "CreateCandidateError404": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "file_not_found",
+              "request_not_found"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateCandidateError409": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "request_aborted",
+              "taken_by_another_agent",
+              "request_finished",
+              "request_not_taken"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateCandidateError500": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "registration_failed",
+              "initialization_failed",
+              "catalog_inconsistent"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateCandidateError503": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "catalog_unavailable",
+              "session_unavailable"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateCandidateBody": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "agentId"
+        ]
       }
     },
     "parameters": {}
@@ -763,6 +1136,80 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FileList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createFile",
+        "tags": [
+          "files"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFileBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作ったファイルです。DS のファイルには空の下書きの文書も作ります。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedFile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid_name: 名前が決まりに合いません。何も作りません。\nリクエストの形が合わないときは、検証の失敗を返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CreateFileError400"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestShapeError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "reference_not_found: アプリが参照するリリースが無いです。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateFileError404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "registration_failed: 登録の書き込みで ID が使われていました。作った文書は消します。\ninitialization_failed: 文書の初期化が、既に中身がある、または消去された、を返しました。登録はしません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateFileError500"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "catalog_unavailable: 目録に届きませんでした。書き込みが届かなかったときは、書き込みが通ったか分かりません。\nsession_unavailable: 文書セッションに届きませんでした。文書の片付けは消去の送り直しに任せます。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateFileError503"
                 }
               }
             }
@@ -1600,6 +2047,179 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CatalogError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPage",
+        "tags": [
+          "files"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePageBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作ったページです。空の骨子の文書も作ります。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid_name: 名前が決まりに合いません。何も作りません。\nnot_an_app: ページを置くファイルが DS のファイルです。何も作りません。\nリクエストの形が合わないときは、検証の失敗を返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CreatePageError400"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestShapeError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "file_not_found: ファイルが無いか、依頼のページのファイルが無いです。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePageError404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "registration_failed: 登録の書き込みで ID が使われていました。作った文書は消します。\ninitialization_failed: 文書の初期化が、既に中身がある、または消去された、を返しました。登録はしません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePageError500"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "catalog_unavailable: 目録に届きませんでした。書き込みが届かなかったときは、書き込みが通ったか分かりません。\nsession_unavailable: 文書セッションに届きませんでした。文書の片付けは消去の送り直しに任せます。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePageError503"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/requests/{requestId}/candidate": {
+      "post": {
+        "operationId": "createCandidate",
+        "tags": [
+          "files"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "requestId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCandidateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作った清書案の文書です。依頼を清書中として取っているエージェントだけが作れます。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedCandidate"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "リクエストの形が合わないときは、検証の失敗を返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestShapeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "file_not_found: ファイルが無いか、依頼のページのファイルが無いです。\nrequest_not_found: 依頼が無いです。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCandidateError404"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "request_aborted: 依頼が中断されています。何も作りません。\ntaken_by_another_agent: 別のエージェントが依頼を取っています。何も作りません。\nrequest_finished: 依頼が終わっています。何も作りません。\nrequest_not_taken: エージェントは依頼を取っていません。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCandidateError409"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "registration_failed: 登録の書き込みで ID が使われていました。作った文書は消します。\ninitialization_failed: 文書の初期化が、既に中身がある、または消去された、を返しました。登録はしません。\ncatalog_inconsistent: 依頼のページが目録にありません。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCandidateError500"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "catalog_unavailable: 目録に届きませんでした。書き込みが届かなかったときは、書き込みが通ったか分かりません。\nsession_unavailable: 文書セッションに届きませんでした。文書の片付けは消去の送り直しに任せます。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCandidateError503"
                 }
               }
             }

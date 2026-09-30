@@ -83,7 +83,11 @@ async function recordPage(
   name: string,
   file = app,
 ) {
-  const result = await addPage(db, { id, file, skeleton, name }, clock);
+  const result = await addPage(
+    db,
+    { id, file, skeleton, name, release: null },
+    clock,
+  );
   if (!result.ok) throw new Error(result.message);
 }
 
@@ -421,13 +425,6 @@ describe("adopting a proposal", () => {
       const id = await makeRequest();
       const other = await makeRequest();
       await registerProposal("doc_prop_q", other);
-      await registerDocument(db, {
-        id: "doc_skel_1",
-        file: app,
-        kind: "skeleton",
-        page: "p_1",
-        release: null,
-      });
       await awaitingChoice(id);
 
       const { status, body } = await adopt(id, proposal);
@@ -483,7 +480,13 @@ describe("pages", () => {
     expect(
       await addPage(
         db,
-        { id: "p_3", file: app, skeleton: "doc_skel_3", name: "一覧" },
+        {
+          id: "p_3",
+          file: app,
+          skeleton: "doc_skel_3",
+          name: "一覧",
+          release: null,
+        },
         clock,
       ),
     ).toEqual({ ok: true });
