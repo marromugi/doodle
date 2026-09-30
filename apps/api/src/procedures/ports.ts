@@ -46,6 +46,7 @@ export type PageWrite =
 export type ProposalWrite =
   | { status: "written" }
   | { status: "request_not_found" }
+  | { status: "page_not_found" }
   | { status: "file_not_found" }
   | { status: "state_mismatch"; state: RequestState; agent: string | null }
   | { status: "id_in_use" }

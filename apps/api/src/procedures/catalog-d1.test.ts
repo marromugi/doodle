@@ -81,6 +81,18 @@ describe("the catalog writes of the create procedures", () => {
     expect(await rows()).toEqual(before);
   });
 
+  test("a page written again with the same page ID and skeleton document ID answers id_in_use and adds no row", async () => {
+    const app = await makeApp();
+    const first = pageInput(app);
+    expect((await catalog.writePageWithSkeleton(first)).status).toBe("written");
+    const before = await rows();
+
+    const result = await catalog.writePageWithSkeleton(first);
+
+    expect(result).toEqual({ status: "id_in_use" });
+    expect(await rows()).toEqual(before);
+  });
+
   test("a page written with a skeleton document ID that the registry already holds answers id_in_use and adds no page row", async () => {
     const app = await makeApp();
     const skeleton = id("doc_skel");

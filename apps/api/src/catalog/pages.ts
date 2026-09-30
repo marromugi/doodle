@@ -35,16 +35,22 @@ export async function addPage(
       .prepare(
         `INSERT INTO documents (id, file_id, kind, page_id, request_id, release_id)
          SELECT ?1, ?2, 'skeleton', ?3, NULL, ?4
-         WHERE EXISTS (SELECT 1 FROM pages WHERE id = ?3 AND skeleton_document_id = ?1)`,
+         WHERE EXISTS (SELECT 1 FROM pages WHERE id = ?3 AND skeleton_document_id = ?1)
+           AND NOT EXISTS (SELECT 1 FROM documents WHERE id = ?1)`,
       )
       .bind(input.skeleton, input.file, input.id, input.release),
   ]);
   if (inserted!.meta.changes > 0) return { ok: true };
 
-  const page = await db
-    .prepare("SELECT 1 AS found FROM pages WHERE id = ?")
-    .bind(input.id)
-    .first();
+  const [pageRows, fileRows] = await db.batch<{
+    found?: number;
+    kind?: "designSystem" | "app";
+  }>([
+    db.prepare("SELECT 1 AS found FROM pages WHERE id = ?").bind(input.id),
+    db.prepare("SELECT kind FROM files WHERE id = ?").bind(input.file),
+  ]);
+  const page = pageRows!.results[0] ?? null;
+  const file = fileRows!.results[0] ?? null;
   if (page !== null) {
     return {
       ok: false,
@@ -52,10 +58,6 @@ export async function addPage(
       message: `Page ${input.id} already exists.`,
     };
   }
-  const file = await db
-    .prepare("SELECT kind FROM files WHERE id = ?")
-    .bind(input.file)
-    .first<{ kind: "designSystem" | "app" }>();
   if (file === null) {
     return {
       ok: false,

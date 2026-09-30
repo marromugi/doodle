@@ -19,16 +19,24 @@ import type {
 
 import type {
   CreateCandidateBody,
+  CreateCandidateError404,
+  CreateCandidateError409,
+  CreateCandidateError500,
+  CreateCandidateError503,
   CreatedCandidate,
   CreatedFile,
   CreatedPage,
   CreateFileBody,
+  CreateFileError400,
+  CreateFileError404,
+  CreateFileError500,
+  CreateFileError503,
   CreatePageBody,
-  InternalError,
-  InvalidInputError,
-  NotFoundError,
-  RequestStateError,
-  UnavailableError,
+  CreatePageError400,
+  CreatePageError404,
+  CreatePageError500,
+  CreatePageError503,
+  RequestShapeError,
 } from "../doodleAPI.schemas";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -59,22 +67,22 @@ export type createFileResponse201 = {
 };
 
 export type createFileResponse400 = {
-  data: InvalidInputError;
+  data: CreateFileError400 | RequestShapeError;
   status: 400;
 };
 
 export type createFileResponse404 = {
-  data: NotFoundError;
+  data: CreateFileError404;
   status: 404;
 };
 
 export type createFileResponse500 = {
-  data: InternalError;
+  data: CreateFileError500;
   status: 500;
 };
 
 export type createFileResponse503 = {
-  data: UnavailableError;
+  data: CreateFileError503;
   status: 503;
 };
 
@@ -148,7 +156,12 @@ export const getCreateFileQueryKey = (createFileBody?: CreateFileBody) => {
 
 export const getCreateFileQueryOptions = <
   TData = Awaited<ReturnType<typeof createFile>>,
-  TError = InvalidInputError | NotFoundError | InternalError | UnavailableError,
+  TError =
+    | CreateFileError400
+    | RequestShapeError
+    | CreateFileError404
+    | CreateFileError500
+    | CreateFileError503,
 >(
   createFileBody?: CreateFileBody,
   options?: {
@@ -178,11 +191,20 @@ export type CreateFileQueryResult = NonNullable<
   Awaited<ReturnType<typeof createFile>>
 >;
 export type CreateFileQueryError =
-  InvalidInputError | NotFoundError | InternalError | UnavailableError;
+  | CreateFileError400
+  | RequestShapeError
+  | CreateFileError404
+  | CreateFileError500
+  | CreateFileError503;
 
 export function useCreateFile<
   TData = Awaited<ReturnType<typeof createFile>>,
-  TError = InvalidInputError | NotFoundError | InternalError | UnavailableError,
+  TError =
+    | CreateFileError400
+    | RequestShapeError
+    | CreateFileError404
+    | CreateFileError500
+    | CreateFileError503,
 >(
   createFileBody: undefined | CreateFileBody,
   options: {
@@ -205,7 +227,12 @@ export function useCreateFile<
 };
 export function useCreateFile<
   TData = Awaited<ReturnType<typeof createFile>>,
-  TError = InvalidInputError | NotFoundError | InternalError | UnavailableError,
+  TError =
+    | CreateFileError400
+    | RequestShapeError
+    | CreateFileError404
+    | CreateFileError500
+    | CreateFileError503,
 >(
   createFileBody?: CreateFileBody,
   options?: {
@@ -228,7 +255,12 @@ export function useCreateFile<
 };
 export function useCreateFile<
   TData = Awaited<ReturnType<typeof createFile>>,
-  TError = InvalidInputError | NotFoundError | InternalError | UnavailableError,
+  TError =
+    | CreateFileError400
+    | RequestShapeError
+    | CreateFileError404
+    | CreateFileError500
+    | CreateFileError503,
 >(
   createFileBody?: CreateFileBody,
   options?: {
@@ -244,7 +276,12 @@ export function useCreateFile<
 
 export function useCreateFile<
   TData = Awaited<ReturnType<typeof createFile>>,
-  TError = InvalidInputError | NotFoundError | InternalError | UnavailableError,
+  TError =
+    | CreateFileError400
+    | RequestShapeError
+    | CreateFileError404
+    | CreateFileError500
+    | CreateFileError503,
 >(
   createFileBody?: CreateFileBody,
   options?: {
@@ -273,22 +310,22 @@ export type createPageResponse201 = {
 };
 
 export type createPageResponse400 = {
-  data: InvalidInputError;
+  data: CreatePageError400 | RequestShapeError;
   status: 400;
 };
 
 export type createPageResponse404 = {
-  data: NotFoundError;
+  data: CreatePageError404;
   status: 404;
 };
 
 export type createPageResponse500 = {
-  data: InternalError;
+  data: CreatePageError500;
   status: 500;
 };
 
 export type createPageResponse503 = {
-  data: UnavailableError;
+  data: CreatePageError503;
   status: 503;
 };
 
@@ -366,7 +403,12 @@ export const getCreatePageQueryKey = (
 
 export const getCreatePageQueryOptions = <
   TData = Awaited<ReturnType<typeof createPage>>,
-  TError = InvalidInputError | NotFoundError | InternalError | UnavailableError,
+  TError =
+    | CreatePageError400
+    | RequestShapeError
+    | CreatePageError404
+    | CreatePageError500
+    | CreatePageError503,
 >(
   fileId: string,
   createPageBody?: CreatePageBody,
@@ -402,11 +444,20 @@ export type CreatePageQueryResult = NonNullable<
   Awaited<ReturnType<typeof createPage>>
 >;
 export type CreatePageQueryError =
-  InvalidInputError | NotFoundError | InternalError | UnavailableError;
+  | CreatePageError400
+  | RequestShapeError
+  | CreatePageError404
+  | CreatePageError500
+  | CreatePageError503;
 
 export function useCreatePage<
   TData = Awaited<ReturnType<typeof createPage>>,
-  TError = InvalidInputError | NotFoundError | InternalError | UnavailableError,
+  TError =
+    | CreatePageError400
+    | RequestShapeError
+    | CreatePageError404
+    | CreatePageError500
+    | CreatePageError503,
 >(
   fileId: string,
   createPageBody: undefined | CreatePageBody,
@@ -430,7 +481,12 @@ export function useCreatePage<
 };
 export function useCreatePage<
   TData = Awaited<ReturnType<typeof createPage>>,
-  TError = InvalidInputError | NotFoundError | InternalError | UnavailableError,
+  TError =
+    | CreatePageError400
+    | RequestShapeError
+    | CreatePageError404
+    | CreatePageError500
+    | CreatePageError503,
 >(
   fileId: string,
   createPageBody?: CreatePageBody,
@@ -454,7 +510,12 @@ export function useCreatePage<
 };
 export function useCreatePage<
   TData = Awaited<ReturnType<typeof createPage>>,
-  TError = InvalidInputError | NotFoundError | InternalError | UnavailableError,
+  TError =
+    | CreatePageError400
+    | RequestShapeError
+    | CreatePageError404
+    | CreatePageError500
+    | CreatePageError503,
 >(
   fileId: string,
   createPageBody?: CreatePageBody,
@@ -471,7 +532,12 @@ export function useCreatePage<
 
 export function useCreatePage<
   TData = Awaited<ReturnType<typeof createPage>>,
-  TError = InvalidInputError | NotFoundError | InternalError | UnavailableError,
+  TError =
+    | CreatePageError400
+    | RequestShapeError
+    | CreatePageError404
+    | CreatePageError500
+    | CreatePageError503,
 >(
   fileId: string,
   createPageBody?: CreatePageBody,
@@ -505,27 +571,27 @@ export type createCandidateResponse201 = {
 };
 
 export type createCandidateResponse400 = {
-  data: InvalidInputError;
+  data: RequestShapeError;
   status: 400;
 };
 
 export type createCandidateResponse404 = {
-  data: NotFoundError;
+  data: CreateCandidateError404;
   status: 404;
 };
 
 export type createCandidateResponse409 = {
-  data: RequestStateError;
+  data: CreateCandidateError409;
   status: 409;
 };
 
 export type createCandidateResponse500 = {
-  data: InternalError;
+  data: CreateCandidateError500;
   status: 500;
 };
 
 export type createCandidateResponse503 = {
-  data: UnavailableError;
+  data: CreateCandidateError503;
   status: 503;
 };
 
@@ -609,11 +675,11 @@ export const getCreateCandidateQueryKey = (
 export const getCreateCandidateQueryOptions = <
   TData = Awaited<ReturnType<typeof createCandidate>>,
   TError =
-    | InvalidInputError
-    | NotFoundError
-    | RequestStateError
-    | InternalError
-    | UnavailableError,
+    | RequestShapeError
+    | CreateCandidateError404
+    | CreateCandidateError409
+    | CreateCandidateError500
+    | CreateCandidateError503,
 >(
   requestId: string,
   createCandidateBody?: CreateCandidateBody,
@@ -658,20 +724,20 @@ export type CreateCandidateQueryResult = NonNullable<
   Awaited<ReturnType<typeof createCandidate>>
 >;
 export type CreateCandidateQueryError =
-  | InvalidInputError
-  | NotFoundError
-  | RequestStateError
-  | InternalError
-  | UnavailableError;
+  | RequestShapeError
+  | CreateCandidateError404
+  | CreateCandidateError409
+  | CreateCandidateError500
+  | CreateCandidateError503;
 
 export function useCreateCandidate<
   TData = Awaited<ReturnType<typeof createCandidate>>,
   TError =
-    | InvalidInputError
-    | NotFoundError
-    | RequestStateError
-    | InternalError
-    | UnavailableError,
+    | RequestShapeError
+    | CreateCandidateError404
+    | CreateCandidateError409
+    | CreateCandidateError500
+    | CreateCandidateError503,
 >(
   requestId: string,
   createCandidateBody: undefined | CreateCandidateBody,
@@ -700,11 +766,11 @@ export function useCreateCandidate<
 export function useCreateCandidate<
   TData = Awaited<ReturnType<typeof createCandidate>>,
   TError =
-    | InvalidInputError
-    | NotFoundError
-    | RequestStateError
-    | InternalError
-    | UnavailableError,
+    | RequestShapeError
+    | CreateCandidateError404
+    | CreateCandidateError409
+    | CreateCandidateError500
+    | CreateCandidateError503,
 >(
   requestId: string,
   createCandidateBody?: CreateCandidateBody,
@@ -733,11 +799,11 @@ export function useCreateCandidate<
 export function useCreateCandidate<
   TData = Awaited<ReturnType<typeof createCandidate>>,
   TError =
-    | InvalidInputError
-    | NotFoundError
-    | RequestStateError
-    | InternalError
-    | UnavailableError,
+    | RequestShapeError
+    | CreateCandidateError404
+    | CreateCandidateError409
+    | CreateCandidateError500
+    | CreateCandidateError503,
 >(
   requestId: string,
   createCandidateBody?: CreateCandidateBody,
@@ -759,11 +825,11 @@ export function useCreateCandidate<
 export function useCreateCandidate<
   TData = Awaited<ReturnType<typeof createCandidate>>,
   TError =
-    | InvalidInputError
-    | NotFoundError
-    | RequestStateError
-    | InternalError
-    | UnavailableError,
+    | RequestShapeError
+    | CreateCandidateError404
+    | CreateCandidateError409
+    | CreateCandidateError500
+    | CreateCandidateError503,
 >(
   requestId: string,
   createCandidateBody?: CreateCandidateBody,

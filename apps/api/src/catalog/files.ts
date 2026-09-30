@@ -17,7 +17,8 @@ export type AddFileResult =
   | { ok: true; file: AddedFile }
   | Failure<"invalid_name" | "reference_not_found" | "document_exists">;
 
-function isValidName(name: string): boolean {
+/** The rule for the name of a file or a page: 1 to 50 code points, not only whitespace. */
+export function isValidName(name: string): boolean {
   const length = [...name].length;
   return length >= 1 && length <= FILE_NAME_MAX_LENGTH && name.trim() !== "";
 }
@@ -81,18 +82,13 @@ export async function addFile(
   const results = await db.batch(statements);
 
   if (results[0]!.meta.changes === 0) {
+    // A design system file has no reference, so the draft ID is the only thing that can refuse it.
     if (draft !== null) {
-      const existing = await db
-        .prepare("SELECT 1 AS found FROM documents WHERE id = ?")
-        .bind(draft)
-        .first();
-      if (existing !== null) {
-        return {
-          ok: false,
-          code: "document_exists",
-          message: `Document ${draft} is already registered.`,
-        };
-      }
+      return {
+        ok: false,
+        code: "document_exists",
+        message: `Document ${draft} is already registered.`,
+      };
     }
     return {
       ok: false,

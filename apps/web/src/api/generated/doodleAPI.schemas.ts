@@ -240,57 +240,63 @@ export interface CreatedFile {
   draftDocumentId?: string;
 }
 
-export type InvalidInputErrorCode =
-  (typeof InvalidInputErrorCode)[keyof typeof InvalidInputErrorCode];
+export type CreateFileError400Code =
+  (typeof CreateFileError400Code)[keyof typeof CreateFileError400Code];
 
-export const InvalidInputErrorCode = {
+export const CreateFileError400Code = {
   invalid_name: "invalid_name",
-  not_an_app: "not_an_app",
 } as const;
 
-export interface InvalidInputError {
-  code: InvalidInputErrorCode;
+export interface CreateFileError400 {
+  code: CreateFileError400Code;
   message: string;
 }
 
-export type NotFoundErrorCode =
-  (typeof NotFoundErrorCode)[keyof typeof NotFoundErrorCode];
+export type RequestShapeErrorError = {
+  name: string;
+  message: string;
+};
 
-export const NotFoundErrorCode = {
-  file_not_found: "file_not_found",
+export interface RequestShapeError {
+  success: false;
+  error: RequestShapeErrorError;
+}
+
+export type CreateFileError404Code =
+  (typeof CreateFileError404Code)[keyof typeof CreateFileError404Code];
+
+export const CreateFileError404Code = {
   reference_not_found: "reference_not_found",
-  request_not_found: "request_not_found",
 } as const;
 
-export interface NotFoundError {
-  code: NotFoundErrorCode;
+export interface CreateFileError404 {
+  code: CreateFileError404Code;
   message: string;
 }
 
-export type InternalErrorCode =
-  (typeof InternalErrorCode)[keyof typeof InternalErrorCode];
+export type CreateFileError500Code =
+  (typeof CreateFileError500Code)[keyof typeof CreateFileError500Code];
 
-export const InternalErrorCode = {
+export const CreateFileError500Code = {
   registration_failed: "registration_failed",
   initialization_failed: "initialization_failed",
-  catalog_inconsistent: "catalog_inconsistent",
 } as const;
 
-export interface InternalError {
-  code: InternalErrorCode;
+export interface CreateFileError500 {
+  code: CreateFileError500Code;
   message: string;
 }
 
-export type UnavailableErrorCode =
-  (typeof UnavailableErrorCode)[keyof typeof UnavailableErrorCode];
+export type CreateFileError503Code =
+  (typeof CreateFileError503Code)[keyof typeof CreateFileError503Code];
 
-export const UnavailableErrorCode = {
+export const CreateFileError503Code = {
   catalog_unavailable: "catalog_unavailable",
   session_unavailable: "session_unavailable",
 } as const;
 
-export interface UnavailableError {
-  code: UnavailableErrorCode;
+export interface CreateFileError503 {
+  code: CreateFileError503Code;
   message: string;
 }
 
@@ -320,6 +326,57 @@ export interface CreatedPage {
   skeletonDocumentId: string;
 }
 
+export type CreatePageError400Code =
+  (typeof CreatePageError400Code)[keyof typeof CreatePageError400Code];
+
+export const CreatePageError400Code = {
+  invalid_name: "invalid_name",
+  not_an_app: "not_an_app",
+} as const;
+
+export interface CreatePageError400 {
+  code: CreatePageError400Code;
+  message: string;
+}
+
+export type CreatePageError404Code =
+  (typeof CreatePageError404Code)[keyof typeof CreatePageError404Code];
+
+export const CreatePageError404Code = {
+  file_not_found: "file_not_found",
+} as const;
+
+export interface CreatePageError404 {
+  code: CreatePageError404Code;
+  message: string;
+}
+
+export type CreatePageError500Code =
+  (typeof CreatePageError500Code)[keyof typeof CreatePageError500Code];
+
+export const CreatePageError500Code = {
+  registration_failed: "registration_failed",
+  initialization_failed: "initialization_failed",
+} as const;
+
+export interface CreatePageError500 {
+  code: CreatePageError500Code;
+  message: string;
+}
+
+export type CreatePageError503Code =
+  (typeof CreatePageError503Code)[keyof typeof CreatePageError503Code];
+
+export const CreatePageError503Code = {
+  catalog_unavailable: "catalog_unavailable",
+  session_unavailable: "session_unavailable",
+} as const;
+
+export interface CreatePageError503 {
+  code: CreatePageError503Code;
+  message: string;
+}
+
 export interface CreatePageBody {
   /**
    * The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points.
@@ -333,18 +390,58 @@ export interface CreatedCandidate {
   candidateDocumentId: string;
 }
 
-export type RequestStateErrorCode =
-  (typeof RequestStateErrorCode)[keyof typeof RequestStateErrorCode];
+export type CreateCandidateError404Code =
+  (typeof CreateCandidateError404Code)[keyof typeof CreateCandidateError404Code];
 
-export const RequestStateErrorCode = {
+export const CreateCandidateError404Code = {
+  file_not_found: "file_not_found",
+  request_not_found: "request_not_found",
+} as const;
+
+export interface CreateCandidateError404 {
+  code: CreateCandidateError404Code;
+  message: string;
+}
+
+export type CreateCandidateError409Code =
+  (typeof CreateCandidateError409Code)[keyof typeof CreateCandidateError409Code];
+
+export const CreateCandidateError409Code = {
   request_aborted: "request_aborted",
   taken_by_another_agent: "taken_by_another_agent",
   request_finished: "request_finished",
   request_not_taken: "request_not_taken",
 } as const;
 
-export interface RequestStateError {
-  code: RequestStateErrorCode;
+export interface CreateCandidateError409 {
+  code: CreateCandidateError409Code;
+  message: string;
+}
+
+export type CreateCandidateError500Code =
+  (typeof CreateCandidateError500Code)[keyof typeof CreateCandidateError500Code];
+
+export const CreateCandidateError500Code = {
+  registration_failed: "registration_failed",
+  initialization_failed: "initialization_failed",
+  catalog_inconsistent: "catalog_inconsistent",
+} as const;
+
+export interface CreateCandidateError500 {
+  code: CreateCandidateError500Code;
+  message: string;
+}
+
+export type CreateCandidateError503Code =
+  (typeof CreateCandidateError503Code)[keyof typeof CreateCandidateError503Code];
+
+export const CreateCandidateError503Code = {
+  catalog_unavailable: "catalog_unavailable",
+  session_unavailable: "session_unavailable",
+} as const;
+
+export interface CreateCandidateError503 {
+  code: CreateCandidateError503Code;
   message: string;
 }
 

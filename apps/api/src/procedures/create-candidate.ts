@@ -65,6 +65,12 @@ const requestNotFound = (requestId: string): Failure<"request_not_found"> => ({
   message: `Request ${requestId} does not exist.`,
 });
 
+const pageNotFound = (requestId: string): Failure<"catalog_inconsistent"> => ({
+  ok: false,
+  code: "catalog_inconsistent",
+  message: `The page of request ${requestId} is not in the catalog.`,
+});
+
 const fileNotFound = (): Failure<"file_not_found"> => ({
   ok: false,
   code: "file_not_found",
@@ -81,11 +87,7 @@ export async function createCandidate(
     case "request_not_found":
       return requestNotFound(input.requestId);
     case "page_not_found":
-      return {
-        ok: false,
-        code: "catalog_inconsistent",
-        message: `The page of request ${input.requestId} is not in the catalog.`,
-      };
+      return pageNotFound(input.requestId);
     case "file_not_found":
       return fileNotFound();
     case "unreachable":
@@ -119,6 +121,9 @@ export async function createCandidate(
     case "request_not_found":
       await eraseDocument(ports, candidateDocumentId);
       return requestNotFound(input.requestId);
+    case "page_not_found":
+      await eraseDocument(ports, candidateDocumentId);
+      return pageNotFound(input.requestId);
     case "file_not_found":
       await eraseDocument(ports, candidateDocumentId);
       return fileNotFound();

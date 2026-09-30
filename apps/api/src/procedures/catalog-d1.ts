@@ -1,7 +1,7 @@
 import { registerProposal } from "../catalog/documents";
 import { addFile, getApp } from "../catalog/files";
-import { addPage, getPage } from "../catalog/pages";
-import { getRequest } from "../catalog/requests";
+import { addPage } from "../catalog/pages";
+import { getRequestApp } from "../catalog/requests";
 import type { CreationCatalog } from "./ports";
 
 const unreachable = { status: "unreachable" } as const;
@@ -27,19 +27,15 @@ export const creationCatalogFromDb = (db: D1Database): CreationCatalog => ({
     return { status: "found", reference: app.reference };
   }),
   readRequest: guarded(async (requestId) => {
-    const request = await getRequest(db, requestId);
-    if (request === null) return { status: "request_not_found" };
-    const page = await getPage(db, request.page);
-    if (page === null) return { status: "page_not_found" };
-    const app = await getApp(db, page.file);
-    if (!app.ok) return { status: "file_not_found" };
+    const request = await getRequestApp(db, requestId);
+    if (!request.ok) return { status: request.code };
     return {
       status: "found",
       state: request.state,
       agent: request.agent,
-      page: page.id,
-      file: page.file,
-      reference: app.reference,
+      page: request.page,
+      file: request.file,
+      reference: request.reference,
     };
   }),
   writeAppFile: guarded(async ({ name, reference }) => {
@@ -90,6 +86,7 @@ export const creationCatalogFromDb = (db: D1Database): CreationCatalog => ({
     if (result.ok) return { status: "written" };
     switch (result.code) {
       case "request_not_found":
+      case "page_not_found":
       case "file_not_found":
         return { status: result.code };
       case "request_state_mismatch":

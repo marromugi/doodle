@@ -7,7 +7,12 @@ import type {
 
 export type RegisterProposalResult =
   | { ok: true }
-  | Failure<"request_not_found" | "file_not_found" | "document_exists">
+  | Failure<
+      | "request_not_found"
+      | "page_not_found"
+      | "file_not_found"
+      | "document_exists"
+    >
   | {
       ok: false;
       code: "request_state_mismatch";
@@ -27,6 +32,7 @@ export async function registerProposal(
        SELECT ?1, ?2, 'proposal', r.page_id, r.id, ?5
        FROM requests r
        WHERE r.id = ?3 AND r.state = 'inProgress' AND r.agent_id = ?4
+         AND EXISTS (SELECT 1 FROM pages WHERE id = r.page_id)
          AND EXISTS (SELECT 1 FROM files WHERE id = ?2)
          AND NOT EXISTS (SELECT 1 FROM documents WHERE id = ?1)`,
     )
@@ -34,22 +40,36 @@ export async function registerProposal(
     .run();
   if (inserted.meta.changes > 0) return { ok: true };
 
-  const request = await db
-    .prepare("SELECT state, agent_id FROM requests WHERE id = ?")
-    .bind(input.request)
-    .first<{ state: RequestState; agent_id: string | null }>();
-  if (request === null) {
+  const [requestRows, fileRows] = await db.batch<{
+    state?: RequestState;
+    agent_id?: string | null;
+    page_found?: number | null;
+    found?: number;
+  }>([
+    db
+      .prepare(
+        `SELECT state, agent_id, (SELECT 1 FROM pages WHERE id = r.page_id) AS page_found
+         FROM requests r WHERE id = ?`,
+      )
+      .bind(input.request),
+    db.prepare("SELECT 1 AS found FROM files WHERE id = ?").bind(input.file),
+  ]);
+  const request = requestRows!.results[0];
+  if (request === undefined) {
     return {
       ok: false,
       code: "request_not_found",
       message: `Request ${input.request} does not exist.`,
     };
   }
-  const file = await db
-    .prepare("SELECT 1 AS found FROM files WHERE id = ?")
-    .bind(input.file)
-    .first();
-  if (file === null) {
+  if (request.page_found === null) {
+    return {
+      ok: false,
+      code: "page_not_found",
+      message: `The page of request ${input.request} does not exist.`,
+    };
+  }
+  if (fileRows!.results[0] === undefined) {
     return {
       ok: false,
       code: "file_not_found",
@@ -61,8 +81,8 @@ export async function registerProposal(
       ok: false,
       code: "request_state_mismatch",
       message: `Request ${input.request} is ${request.state}.`,
-      state: request.state,
-      agent: request.agent_id,
+      state: request.state!,
+      agent: request.agent_id ?? null,
     };
   }
   return {

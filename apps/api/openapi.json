@@ -740,14 +740,13 @@
           "fileId"
         ]
       },
-      "InvalidInputError": {
+      "CreateFileError400": {
         "type": "object",
         "properties": {
           "code": {
             "type": "string",
             "enum": [
-              "invalid_name",
-              "not_an_app"
+              "invalid_name"
             ]
           },
           "message": {
@@ -759,15 +758,43 @@
           "message"
         ]
       },
-      "NotFoundError": {
+      "RequestShapeError": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "error"
+        ]
+      },
+      "CreateFileError404": {
         "type": "object",
         "properties": {
           "code": {
             "type": "string",
             "enum": [
-              "file_not_found",
-              "reference_not_found",
-              "request_not_found"
+              "reference_not_found"
             ]
           },
           "message": {
@@ -779,15 +806,14 @@
           "message"
         ]
       },
-      "InternalError": {
+      "CreateFileError500": {
         "type": "object",
         "properties": {
           "code": {
             "type": "string",
             "enum": [
               "registration_failed",
-              "initialization_failed",
-              "catalog_inconsistent"
+              "initialization_failed"
             ]
           },
           "message": {
@@ -799,7 +825,7 @@
           "message"
         ]
       },
-      "UnavailableError": {
+      "CreateFileError503": {
         "type": "object",
         "properties": {
           "code": {
@@ -883,6 +909,81 @@
           "skeletonDocumentId"
         ]
       },
+      "CreatePageError400": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_name",
+              "not_an_app"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreatePageError404": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "file_not_found"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreatePageError500": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "registration_failed",
+              "initialization_failed"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreatePageError503": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "catalog_unavailable",
+              "session_unavailable"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
       "CreatePageBody": {
         "type": "object",
         "properties": {
@@ -908,7 +1009,26 @@
           "candidateDocumentId"
         ]
       },
-      "RequestStateError": {
+      "CreateCandidateError404": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "file_not_found",
+              "request_not_found"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateCandidateError409": {
         "type": "object",
         "properties": {
           "code": {
@@ -918,6 +1038,45 @@
               "taken_by_another_agent",
               "request_finished",
               "request_not_taken"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateCandidateError500": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "registration_failed",
+              "initialization_failed",
+              "catalog_inconsistent"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateCandidateError503": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "catalog_unavailable",
+              "session_unavailable"
             ]
           },
           "message": {
@@ -1009,41 +1168,48 @@
             }
           },
           "400": {
-            "description": "入力が決まりに合いません。何も作りません。",
+            "description": "invalid_name: 名前が決まりに合いません。何も作りません。\nリクエストの形が合わないときは、検証の失敗を返します。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InvalidInputError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CreateFileError400"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestShapeError"
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "入力が指すものがありません。何も作りません。",
+            "description": "reference_not_found: アプリが参照するリリースが無いです。何も作りません。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NotFoundError"
+                  "$ref": "#/components/schemas/CreateFileError404"
                 }
               }
             }
           },
           "500": {
-            "description": "登録か初期化に失敗したか、目録の中に食い違いがあります。作った文書は消します。",
+            "description": "registration_failed: 登録の書き込みで ID が使われていました。作った文書は消します。\ninitialization_failed: 文書の初期化が、既に中身がある、または消去された、を返しました。登録はしません。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InternalError"
+                  "$ref": "#/components/schemas/CreateFileError500"
                 }
               }
             }
           },
           "503": {
-            "description": "目録か文書セッションに届きませんでした。",
+            "description": "catalog_unavailable: 目録に届きませんでした。書き込みが届かなかったときは、書き込みが通ったか分かりません。\nsession_unavailable: 文書セッションに届きませんでした。文書の片付けは消去の送り直しに任せます。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UnavailableError"
+                  "$ref": "#/components/schemas/CreateFileError503"
                 }
               }
             }
@@ -1923,41 +2089,48 @@
             }
           },
           "400": {
-            "description": "入力が決まりに合いません。何も作りません。",
+            "description": "invalid_name: 名前が決まりに合いません。何も作りません。\nnot_an_app: ページを置くファイルが DS のファイルです。何も作りません。\nリクエストの形が合わないときは、検証の失敗を返します。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InvalidInputError"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CreatePageError400"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestShapeError"
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "入力が指すものがありません。何も作りません。",
+            "description": "file_not_found: ファイルが無いか、依頼のページのファイルが無いです。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NotFoundError"
+                  "$ref": "#/components/schemas/CreatePageError404"
                 }
               }
             }
           },
           "500": {
-            "description": "登録か初期化に失敗したか、目録の中に食い違いがあります。作った文書は消します。",
+            "description": "registration_failed: 登録の書き込みで ID が使われていました。作った文書は消します。\ninitialization_failed: 文書の初期化が、既に中身がある、または消去された、を返しました。登録はしません。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InternalError"
+                  "$ref": "#/components/schemas/CreatePageError500"
                 }
               }
             }
           },
           "503": {
-            "description": "目録か文書セッションに届きませんでした。",
+            "description": "catalog_unavailable: 目録に届きませんでした。書き込みが届かなかったときは、書き込みが通ったか分かりません。\nsession_unavailable: 文書セッションに届きませんでした。文書の片付けは消去の送り直しに任せます。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UnavailableError"
+                  "$ref": "#/components/schemas/CreatePageError503"
                 }
               }
             }
@@ -2002,51 +2175,51 @@
             }
           },
           "400": {
-            "description": "入力が決まりに合いません。何も作りません。",
+            "description": "リクエストの形が合わないときは、検証の失敗を返します。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InvalidInputError"
+                  "$ref": "#/components/schemas/RequestShapeError"
                 }
               }
             }
           },
           "404": {
-            "description": "入力が指すものがありません。何も作りません。",
+            "description": "file_not_found: ファイルが無いか、依頼のページのファイルが無いです。\nrequest_not_found: 依頼が無いです。何も作りません。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NotFoundError"
+                  "$ref": "#/components/schemas/CreateCandidateError404"
                 }
               }
             }
           },
           "409": {
-            "description": "依頼の状態が合いません。理由はコードで返します。何も作りません。",
+            "description": "request_aborted: 依頼が中断されています。何も作りません。\ntaken_by_another_agent: 別のエージェントが依頼を取っています。何も作りません。\nrequest_finished: 依頼が終わっています。何も作りません。\nrequest_not_taken: エージェントは依頼を取っていません。何も作りません。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RequestStateError"
+                  "$ref": "#/components/schemas/CreateCandidateError409"
                 }
               }
             }
           },
           "500": {
-            "description": "登録か初期化に失敗したか、目録の中に食い違いがあります。作った文書は消します。",
+            "description": "registration_failed: 登録の書き込みで ID が使われていました。作った文書は消します。\ninitialization_failed: 文書の初期化が、既に中身がある、または消去された、を返しました。登録はしません。\ncatalog_inconsistent: 依頼のページが目録にありません。何も作りません。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InternalError"
+                  "$ref": "#/components/schemas/CreateCandidateError500"
                 }
               }
             }
           },
           "503": {
-            "description": "目録か文書セッションに届きませんでした。",
+            "description": "catalog_unavailable: 目録に届きませんでした。書き込みが届かなかったときは、書き込みが通ったか分かりません。\nsession_unavailable: 文書セッションに届きませんでした。文書の片付けは消去の送り直しに任せます。",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UnavailableError"
+                  "$ref": "#/components/schemas/CreateCandidateError503"
                 }
               }
             }
