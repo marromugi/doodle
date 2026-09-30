@@ -23,8 +23,14 @@ async function itemOf(id: string): Promise<Item> {
   return item;
 }
 
-async function addDesignSystem(name = "Acme DS"): Promise<string> {
-  const result = await addFile(db, { kind: "designSystem", name });
+let drafts = 0;
+const nextDraft = () => `doc_draft_${++drafts}`;
+
+async function addDesignSystem(
+  name = "Acme DS",
+  draft = nextDraft(),
+): Promise<string> {
+  const result = await addFile(db, { kind: "designSystem", name, draft });
   if (!result.ok) throw new Error(result.message);
   return result.file.id;
 }
@@ -64,6 +70,7 @@ describe("recording files", () => {
     const added = await addFile(db, {
       kind: "designSystem",
       name: "Acme DS",
+      draft: nextDraft(),
     });
     expect(added).toEqual({
       ok: true,
@@ -102,7 +109,11 @@ describe("recording files", () => {
     async (name) => {
       await addDesignSystem("Acme DS");
 
-      const result = await addFile(db, { kind: "designSystem", name });
+      const result = await addFile(db, {
+        kind: "designSystem",
+        name,
+        draft: nextDraft(),
+      });
 
       expect(result.ok).toBe(true);
       expect(await listFiles()).toHaveLength(2);
@@ -114,7 +125,11 @@ describe("recording files", () => {
     async (name) => {
       await addDesignSystem("Acme DS");
 
-      const result = await addFile(db, { kind: "designSystem", name });
+      const result = await addFile(db, {
+        kind: "designSystem",
+        name,
+        draft: nextDraft(),
+      });
 
       expect(result).toEqual({
         ok: false,
@@ -250,13 +265,7 @@ describe("the document registry", () => {
   });
 
   test("a design system draft is looked up with kind dsDraft and a null release", async () => {
-    const ds = await addDesignSystem();
-    await registerDocument(db, {
-      id: "doc_draft_1",
-      file: ds,
-      kind: "dsDraft",
-      release: null,
-    });
+    await addDesignSystem("Acme DS", "doc_draft_1");
 
     const { status, body } = await get("/api/documents/doc_draft_1");
 
@@ -374,7 +383,11 @@ describe("recent files", () => {
     const clock = () => new Date((now += 1000));
     for (let i = 1; i <= 12; i++) {
       const name = `f${String(i).padStart(2, "0")}`;
-      const result = await addFile(db, { kind: "designSystem", name }, clock);
+      const result = await addFile(
+        db,
+        { kind: "designSystem", name, draft: nextDraft() },
+        clock,
+      );
       expect(result.ok).toBe(true);
     }
 
