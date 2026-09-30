@@ -725,6 +725,220 @@
         "required": [
           "pages"
         ]
+      },
+      "CreatedFile": {
+        "type": "object",
+        "properties": {
+          "fileId": {
+            "type": "string"
+          },
+          "draftDocumentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ]
+      },
+      "InvalidInputError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_name",
+              "not_an_app"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "NotFoundError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "file_not_found",
+              "reference_not_found",
+              "request_not_found"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "InternalError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "registration_failed",
+              "initialization_failed",
+              "catalog_inconsistent"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "UnavailableError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "catalog_unavailable",
+              "session_unavailable"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateFileBody": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "designSystem"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points."
+              }
+            },
+            "required": [
+              "kind",
+              "name"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "app"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points."
+              },
+              "reference": {
+                "$ref": "#/components/schemas/ReleaseReference"
+              }
+            },
+            "required": [
+              "kind",
+              "name",
+              "reference"
+            ]
+          }
+        ]
+      },
+      "CreatedPage": {
+        "type": "object",
+        "properties": {
+          "pageId": {
+            "type": "string"
+          },
+          "skeletonDocumentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pageId",
+          "skeletonDocumentId"
+        ]
+      },
+      "CreatePageBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CreatedCandidate": {
+        "type": "object",
+        "properties": {
+          "candidateDocumentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidateDocumentId"
+        ]
+      },
+      "RequestStateError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "request_aborted",
+              "taken_by_another_agent",
+              "request_finished",
+              "request_not_taken"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "CreateCandidateBody": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "agentId"
+        ]
       }
     },
     "parameters": {}
@@ -763,6 +977,73 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FileList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createFile",
+        "tags": [
+          "files"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFileBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作ったファイルです。DS のファイルには空の下書きの文書も作ります。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedFile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "入力が決まりに合いません。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidInputError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "入力が指すものがありません。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "登録か初期化に失敗したか、目録の中に食い違いがあります。作った文書は消します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "目録か文書セッションに届きませんでした。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
                 }
               }
             }
@@ -1600,6 +1881,172 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CatalogError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPage",
+        "tags": [
+          "files"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "fileId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePageBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作ったページです。空の骨子の文書も作ります。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "入力が決まりに合いません。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidInputError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "入力が指すものがありません。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "登録か初期化に失敗したか、目録の中に食い違いがあります。作った文書は消します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "目録か文書セッションに届きませんでした。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/requests/{requestId}/candidate": {
+      "post": {
+        "operationId": "createCandidate",
+        "tags": [
+          "files"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "requestId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCandidateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作った清書案の文書です。依頼を清書中として取っているエージェントだけが作れます。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedCandidate"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "入力が決まりに合いません。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidInputError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "入力が指すものがありません。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "依頼の状態が合いません。理由はコードで返します。何も作りません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestStateError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "登録か初期化に失敗したか、目録の中に食い違いがあります。作った文書は消します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "目録か文書セッションに届きませんでした。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnavailableError"
                 }
               }
             }

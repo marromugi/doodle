@@ -235,6 +235,123 @@ export interface PageList {
   pages: Page[];
 }
 
+export interface CreatedFile {
+  fileId: string;
+  draftDocumentId?: string;
+}
+
+export type InvalidInputErrorCode =
+  (typeof InvalidInputErrorCode)[keyof typeof InvalidInputErrorCode];
+
+export const InvalidInputErrorCode = {
+  invalid_name: "invalid_name",
+  not_an_app: "not_an_app",
+} as const;
+
+export interface InvalidInputError {
+  code: InvalidInputErrorCode;
+  message: string;
+}
+
+export type NotFoundErrorCode =
+  (typeof NotFoundErrorCode)[keyof typeof NotFoundErrorCode];
+
+export const NotFoundErrorCode = {
+  file_not_found: "file_not_found",
+  reference_not_found: "reference_not_found",
+  request_not_found: "request_not_found",
+} as const;
+
+export interface NotFoundError {
+  code: NotFoundErrorCode;
+  message: string;
+}
+
+export type InternalErrorCode =
+  (typeof InternalErrorCode)[keyof typeof InternalErrorCode];
+
+export const InternalErrorCode = {
+  registration_failed: "registration_failed",
+  initialization_failed: "initialization_failed",
+  catalog_inconsistent: "catalog_inconsistent",
+} as const;
+
+export interface InternalError {
+  code: InternalErrorCode;
+  message: string;
+}
+
+export type UnavailableErrorCode =
+  (typeof UnavailableErrorCode)[keyof typeof UnavailableErrorCode];
+
+export const UnavailableErrorCode = {
+  catalog_unavailable: "catalog_unavailable",
+  session_unavailable: "session_unavailable",
+} as const;
+
+export interface UnavailableError {
+  code: UnavailableErrorCode;
+  message: string;
+}
+
+export type CreateFileBody =
+  | {
+      kind: "designSystem";
+      /**
+       * The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points.
+       * @minLength 1
+       * @maxLength 50
+       */
+      name: string;
+    }
+  | {
+      kind: "app";
+      /**
+       * The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points.
+       * @minLength 1
+       * @maxLength 50
+       */
+      name: string;
+      reference: ReleaseReference | null;
+    };
+
+export interface CreatedPage {
+  pageId: string;
+  skeletonDocumentId: string;
+}
+
+export interface CreatePageBody {
+  /**
+   * The name must be 1 to 50 characters and not only whitespace. Length is counted in Unicode code points.
+   * @minLength 1
+   * @maxLength 50
+   */
+  name: string;
+}
+
+export interface CreatedCandidate {
+  candidateDocumentId: string;
+}
+
+export type RequestStateErrorCode =
+  (typeof RequestStateErrorCode)[keyof typeof RequestStateErrorCode];
+
+export const RequestStateErrorCode = {
+  request_aborted: "request_aborted",
+  taken_by_another_agent: "taken_by_another_agent",
+  request_finished: "request_finished",
+  request_not_taken: "request_not_taken",
+} as const;
+
+export interface RequestStateError {
+  code: RequestStateErrorCode;
+  message: string;
+}
+
+export interface CreateCandidateBody {
+  agentId: string;
+}
+
 export type PutDocumentSummaryBody = {
   revision: number;
   updatedAt: string;

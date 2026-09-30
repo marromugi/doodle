@@ -1,13 +1,13 @@
 import { z } from "@hono/zod-openapi";
 
-const ReleaseReferenceSchema = z
+export const ReleaseReferenceSchema = z
   .object({ designSystem: z.string(), release: z.string() })
   .openapi("ReleaseReference");
 
 export type ReleaseReference = z.infer<typeof ReleaseReferenceSchema>;
 
 export type AddFileInput =
-  | { kind: "designSystem"; name: string }
+  | { kind: "designSystem"; name: string; draft: string }
   | { kind: "app"; name: string; reference: ReleaseReference | null };
 
 export type AddedFile = {
@@ -213,6 +213,15 @@ export type AddPageInput = {
   file: string;
   skeleton: string;
   name: string;
+  release: string | null;
+};
+
+export type AddProposalInput = {
+  id: string;
+  file: string;
+  request: string;
+  agent: string;
+  release: string | null;
 };
 
 export const AuthorKindSchema = z

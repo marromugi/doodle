@@ -3,11 +3,8 @@ import { abortAllDurableObjects, runInDurableObject } from "cloudflare:test";
 import { env } from "cloudflare:workers";
 import { describe, expect, test } from "vitest";
 
-import {
-  eraseRetryFromEnv,
-  eraseRetryStub,
-  type EraseRetry,
-} from "./erase-retry";
+import type { EraseRetry } from "./erase-retry";
+import { eraseRetryFromEnv, eraseRetryStub } from "./erase-retry-port";
 import type { DocumentSessions } from "./ports";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

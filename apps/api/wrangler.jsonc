@@ -15,9 +15,14 @@
   "durable_objects": {
     "bindings": [
       { "name": "DOCUMENT_SESSION", "class_name": "DocumentSession" },
+      { "name": "ERASE_RETRY", "class_name": "EraseRetry" },
     ],
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentSession"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["DocumentSession"] },
+    { "tag": "v2", "new_sqlite_classes": ["EraseRetry"] },
+  ],
+  "vars": { "ERASE_RETRY_SECONDS": 5 },
   "observability": {
     "enabled": true,
   },

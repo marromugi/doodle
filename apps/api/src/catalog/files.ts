@@ -15,13 +15,14 @@ export type Clock = () => Date;
 
 export type AddFileResult =
   | { ok: true; file: AddedFile }
-  | Failure<"invalid_name" | "reference_not_found">;
+  | Failure<"invalid_name" | "reference_not_found" | "document_exists">;
 
 function isValidName(name: string): boolean {
   const length = [...name].length;
   return length >= 1 && length <= FILE_NAME_MAX_LENGTH && name.trim() !== "";
 }
 
+// A design system file is written together with the registration of its draft document.
 export async function addFile(
   db: D1Database,
   input: AddFileInput,
@@ -43,26 +44,56 @@ export async function addFile(
   };
   const reference: ReleaseReference | null =
     input.kind === "app" ? input.reference : null;
+  const draft = input.kind === "designSystem" ? input.draft : null;
 
-  // The insert is conditional so that the reference check and the write are one statement.
-  const inserted = await db
-    .prepare(
-      `INSERT INTO files (id, workspace_id, kind, name, created_at, reference_design_system_id, reference_release_id)
-       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7
-       WHERE ?7 IS NULL OR EXISTS (SELECT 1 FROM releases WHERE id = ?7 AND design_system_id = ?6)`,
-    )
-    .bind(
-      file.id,
-      PERSONAL_WORKSPACE_ID,
-      file.kind,
-      file.name,
-      file.createdAt,
-      reference?.designSystem ?? null,
-      reference?.release ?? null,
-    )
-    .run();
+  // The draft registration runs after the file insert and only when that row exists,
+  // so both are written or neither is. A batch does not fail on a statement that changes no rows.
+  const statements = [
+    db
+      .prepare(
+        `INSERT INTO files (id, workspace_id, kind, name, created_at, reference_design_system_id, reference_release_id)
+         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7
+         WHERE (?7 IS NULL OR EXISTS (SELECT 1 FROM releases WHERE id = ?7 AND design_system_id = ?6))
+           AND (?8 IS NULL OR NOT EXISTS (SELECT 1 FROM documents WHERE id = ?8))`,
+      )
+      .bind(
+        file.id,
+        PERSONAL_WORKSPACE_ID,
+        file.kind,
+        file.name,
+        file.createdAt,
+        reference?.designSystem ?? null,
+        reference?.release ?? null,
+        draft,
+      ),
+  ];
+  if (draft !== null) {
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO documents (id, file_id, kind, page_id, request_id, release_id)
+           SELECT ?1, ?2, 'dsDraft', NULL, NULL, NULL
+           WHERE EXISTS (SELECT 1 FROM files WHERE id = ?2)`,
+        )
+        .bind(draft, file.id),
+    );
+  }
+  const results = await db.batch(statements);
 
-  if (inserted.meta.changes === 0) {
+  if (results[0]!.meta.changes === 0) {
+    if (draft !== null) {
+      const existing = await db
+        .prepare("SELECT 1 AS found FROM documents WHERE id = ?")
+        .bind(draft)
+        .first();
+      if (existing !== null) {
+        return {
+          ok: false,
+          code: "document_exists",
+          message: `Document ${draft} is already registered.`,
+        };
+      }
+    }
     return {
       ok: false,
       code: "reference_not_found",
@@ -70,6 +101,50 @@ export async function addFile(
     };
   }
   return { ok: true, file };
+}
+
+export type GetAppResult =
+  | {
+      ok: true;
+      kind: "designSystem" | "app";
+      reference: ReleaseReference | null;
+    }
+  | Failure<"file_not_found">;
+
+/** The file's kind and the release it references now. */
+export async function getApp(
+  db: D1Database,
+  id: string,
+): Promise<GetAppResult> {
+  const row = await db
+    .prepare(
+      "SELECT kind, reference_design_system_id, reference_release_id FROM files WHERE id = ?",
+    )
+    .bind(id)
+    .first<{
+      kind: "designSystem" | "app";
+      reference_design_system_id: string | null;
+      reference_release_id: string | null;
+    }>();
+  if (row === null) {
+    return {
+      ok: false,
+      code: "file_not_found",
+      message: `File ${id} does not exist.`,
+    };
+  }
+  return {
+    ok: true,
+    kind: row.kind,
+    reference:
+      row.reference_design_system_id !== null &&
+      row.reference_release_id !== null
+        ? {
+            designSystem: row.reference_design_system_id,
+            release: row.reference_release_id,
+          }
+        : null,
+  };
 }
 
 type FileRow = {
